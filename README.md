@@ -3,145 +3,108 @@
 ```
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
-║   ██████╗ ██╗████████╗   ████████╗██████╗ ███████╗██╗  ██╗    ║
-║  ██╔════╝ ██║╚══██╔══╝   ╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝    ║
-║  ██║  ███╗██║   ██║         ██║   ██████╔╝█████╗  █████╔╝     ║
-║  ██║   ██║██║   ██║         ██║   ██╔══██╗██╔══╝  ██╔═██╗     ║
-║  ╚██████╔╝██║   ██║         ██║   ██║  ██║███████╗██║  ██╗    ║
-║   ╚═════╝ ╚═╝   ╚═╝         ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝    ║
+║   ██████╗ ██╗████████╗   ████████╗██████╗ ███████╗██╗  ██╗  ║
+║  ██╔════╝ ██║╚══██╔══╝   ╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝  ║
+║  ██║  ███╗██║   ██║         ██║   ██████╔╝█████╗  █████╔╝   ║
+║  ██║   ██║██║   ██║         ██║   ██╔══██╗██╔══╝  ██╔═██╗   ║
+║  ╚██████╔╝██║   ██║         ██║   ██║  ██║███████╗██║  ██╗  ║
+║   ╚═════╝ ╚═╝   ╚═╝         ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝  ║
 ║                                                               ║
-║            Navigate Git History Like It's 1989!               ║
+║            Navigate Git History Like It's 1989!              ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
 ```
 
-<p align="center">
-  <img src="assets/demo.gif" alt="git-trek demo" width="100%" />
-</p>
+> *"Captain's Log, Stardate 2024: Where we're going, we don't need `git log --graph`."*
 
+**git-trek** is a highly-visual, interactive TUI that transforms your git history into a navigable timeline. It's a command console for time travel through your codebase, designed for developers who want to safely explore the state of their code at any point in time—without the risk of accidental `git reset`.
 
+## ✨ At a Glance
 
-> *"Where we're going, we don't need `git log --graph`"*
+| Timeline View | Detail View |
+| :---: | :---: |
+| ![Timeline View](assets/page1.jpg) | ![Detail View](assets/page2.png) |
 
-## 🎮 What is this?
+## 🎯 Features
 
-Ever wanted to scrub through your git history like you're editing video in the 90s? **git-trek** lets you navigate commits with the elegance of Oregon Trail and the power of a time machine.
+-   **Interactive Timeline Scrubbing**: Navigate your commit history with arrow keys. Your working directory updates in real-time, allowing you to instantly see the state of your code and run tests at any point.
+-   **Instant-Jump Navigation**: Each visible commit is labeled `[A]` through `[J]` for immediate, single-keystroke navigation.
+-   **Detailed Commit Inspection**: Press `Enter` to open a high-detail view of any commit, showing the full commit message, author, date, and diff statistics (files changed, insertions, deletions).
+-   **Safe, Non-Destructive Checkout**: The checkout process is designed for safety. It uses a confirmation prompt and places you in a "detached HEAD" state, leaving your original branch completely untouched and making it trivial to return.
+-   **Thematic Sci-Fi Interface**: A retro-futuristic UI that makes exploring history feel less like a chore and more like an adventure.
+-   **Single-Binary Installation**: Once installed, `git-trek` is a single, dependency-free executable that runs anywhere.
 
 ## 🏁 Quick Start
 
+### For End-Users (Recommended)
+
+1.  Download the latest executable for your OS from the [**GitHub Releases page**](https://github.com/junovhs/git-trek/releases/latest).
+2.  Unzip the file and place the `git-trek` binary in a directory that is in your system's `PATH`.
+3.  Run `git-trek` from inside any git repository.
+
+### For Rust Developers
+
 ```bash
-# Install from crates.io (once published)
+# Install directly from crates.io (once published)
 cargo install git-trek
 
-# OR build from source
-git clone https://github.com/yourusername/git-trek
-cd git-trek
-cargo install --path .
+# OR install directly from the GitHub repository
+cargo install --git https://github.com/junovhs/git-trek.git
 
 # Start trekking!
 git-trek
 ```
 
-## 🕹️ Controls
+## 🕹️ The Workflow
 
-Once you start git-trek, you're in the captain's seat:
+1.  **Launch**: Run `git-trek` in your repository.
+2.  **Navigate**: Use the arrow keys or `A-J` to scrub through the timeline. Watch your editor and file system update instantly.
+3.  **Inspect**: See a commit you're interested in? Press `Enter` to open the detail view and see the full message and stats.
+4.  **Engage**: From the detail view, press `Enter` again to initiate a safe checkout. After a `[Y/N]` confirmation, you'll be placed in a detached HEAD state at that commit.
+5.  **Return**: Quit with `Q` at any time to safely return your branch to its original state.
 
-| Key | Action |
-|-----|--------|
-| `↑` `W` | Navigate to previous commit |
-| `↓` `S` | Navigate to next commit |
-| `A-J` | Jump directly to labeled commit |
-| `R` | Restore (apply current commit to your branch) |
-| `Q` | Quit (return to original state) |
-| `X` | Exit (same as quit) |
+## ⌨️ Controls
 
-## 🎯 Features
-
-- **Visual Timeline**: See where you are (◉), where you started (◎), and everywhere else (○)
-- **Letter Navigation**: Each visible commit gets a letter A-J for instant jumping
-- **Safe Exploration**: Uses a temporary branch so your work is always safe
-- **Retro Aesthetics**: Full color TUI that looks like it escaped from 1989
-- **Zero Dependencies**: Single binary, works anywhere Rust works
-
-## 📖 How It Works
-
-1. **Start Trek**: Creates a temporary branch at your current HEAD
-2. **Navigate**: Move through history without affecting your actual branch
-3. **Restore or Quit**: Either apply a found commit or return home safely
-
-```bash
-# Start exploring from current HEAD
-git-trek
-
-# Navigate with arrow keys or WASD
-# See a commit you like? Press R to restore to it
-# Changed your mind? Press Q to quit without changes
-```
-
-## 🎨 The Interface
-
-```
-╔══════════════════════════════════════════════════════════════╗
-║ 🚀 GIT TREK - STARDATE 2024                                 ║
-╚══════════════════════════════════════════════════════════════╝
-╔═══ TEMPORAL FLUX NAVIGATOR ═══╗
-║  ◉ [A] Fix navigation bug      ║
-║  │                              ║
-║  ○ [B] Add color support        ║
-║  │                              ║
-║  ○ [C] Initial commit           ║
-║  │                              ║
-║  ◎ [D] Where you started        ║
-╚═════════════════════════════════╝
-╔═══ SCAN RESULTS ═══╗
-║ Hash: abc123  Author: Captain   ║
-║ Time: 2 hours ago  Changes: +42 ║
-╚═════════════════════════════════╝
-↑↓/WS: Navigate | A-J: Jump | R: Restore | Q: Quit
-```
+| View | Key | Action |
+| :--- | :--- | :--- |
+| **Timeline** | `↑` `W` / `↓` `S` | Navigate to previous/next commit |
+| | `A` - `J` | Jump directly to labeled commit |
+| | `Enter` | Open the Detail View for the selected commit |
+| | `Q` / `Esc` | Quit the application, restoring original state |
+| **Detail View** | `Enter` / `C` | Proceed to checkout confirmation |
+| | `Q`/`Esc`/`Backspace` | Return to the Timeline View |
+| **Confirmation** | `Y` | Confirm and perform the safe checkout |
+| | `N`/`Esc`/`Backspace`| Cancel and return to the Detail View |
 
 ## 🚨 Requirements
 
-- Git repository with commits to explore
-- Clean working tree (commit or stash changes first)
-- Terminal with color support (most modern terminals)
+-   A Git repository.
+-   A clean working tree (commit or stash your changes before running).
+-   A terminal that supports colors.
 
 ## 🛠️ Development
 
 ```bash
-# Clone the repo
-git clone https://github.com/yourusername/git-trek
+# Clone the repository
+git clone https://github.com/junovhs/git-trek.git
 cd git-trek
 
-# Run in development
+# Run in development mode
 cargo run
 
-# Run tests
-cargo test
-
-# Build optimized binary
+# Build the optimized release binary
 cargo build --release
 
-# Install locally
+# Install locally for development
 cargo install --path .
 ```
 
-## 🎪 Why "git-trek"?
-
-Because navigating git history should feel like an adventure, not a chore. This tool brings the joy of visual timeline scrubbing to the command line, wrapped in the cozy aesthetics of retro computing.
-
-## 📜 License
-
-MIT - Go forth and trek!
-
 ## 🙏 Inspired By
 
-- The timeline scrubbing of video editors
-- The simplicity of `git-nav` (the bash predecessor)
-- The beauty of lazygit (but way simpler)
-- Oregon Trail (for the vibes)
-- Star Trek (for the name)
+-   The simplicity of `git-nav` (the bash predecessor)
+-   The power and beauty of `lazygit`
+-   The vibes of retro computing and classic sci-fi
 
 ---
 
-*Made with coffee and rust by developers who think git should be more fun*
+*Made with coffee and rust by developers who think git should be more fun.*
