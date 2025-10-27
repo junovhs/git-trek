@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# git-nav: scrub through commits like a video timeline
+# pure bash, zero deps, just vibes ✨
+
+BRANCH="_nav"
+ANCHOR="refs/nav/anchor"
+
+# visuals
+RESET=$'\e[0m'
+BOLD=$'\e[1m'
+GREEN=$'\e[92m'
+CYAN=$'\e[96m'
+GRAY=$'\e[90m'
+YELLOW=$'\e[93m'
+BLUE=$'\e[94m'
+RED=$'\e[91m'
+
+# state
+TIMELINE_ACTIVE=0
+
+die() { echo "❌ $*" >&2; exit 1; }
+
+timeline() {
+    local here=$(git rev-parse HEAD)
+    local anchor=$(git rev-parse "$ANCHOR" 2>/dev/null || echo "")
+    [[ -z $anchor ]] && die "No session. Run: git nav start"
+    
+    # get commit chain
+    local commits=()
+    while IFS= read -r sha; do
+        commits+=("$sha")
+    done < <(git rev-list --first-parent "$here~3..$anchor" 2>/dev/null | tac)
+    
+    # build visual timeline
+    local output=""
+    local marker_pos=0
+    local pos=0
+    
+    for i in "${!commits[@]}"; do
+        local sha="${commits[$i]}"
+        
+        if [[ $sha == "$here" ]]; then
+            output+="${GREEN}◉${RESET}"
+            marker_pos=$pos
+        elif [[ $sha == "$anchor" ]]; then
+            output+="${CYAN}◎${RESET}"
+        else
+            output+="${GRAY}○${RESET}"
+        fi
+        
+        if [[ $i -lt $((${#commits[@]} - 1)) ]]; then
+            output+="${GRAY}─${RESET}"
+            pos=$((pos + 2))
+        else
+            pos=$((pos + 1))
+        fi
+    done
+    
+    # clear previous if exists
+    if [[ $TIMELINE_ACTIVE -eq 1 ]]; then
+        printf "\r\e[K\e[1A\e[K\e[1A\e[K\r"  # clear 3 lines
+    else
+        TIMELINE_ACTIVE=1
+    fi
+    
+    # gather commit info
+    local short=$(git rev-parse --short "$here")
+    local msg=$(git log -1 --pretty=format:"%s" "$here")
+    local author=$(git log -1 --pretty=format:"%an" "$here")
+    local when=$(git log -1 --pretty=format:"%ar" "$here")
+    local stats=$(git diff --shortstat "$here^..$here" 2>/dev/null | sed 's/^ //' || echo "initial commit")
+    
+    # print info (3 lines)
+    echo "$output"
+    echo "${BLUE}$short${RESET} ${BOLD}$msg${RESET}"
+    echo "${GRAY}$author · $when · $stats${RESET}"
+}
+
+show_current_info() {
+    local here=$(git rev-parse HEAD)
+    local short=$(git rev-parse --short "$here")
+    local msg=$(git log -1 --pretty=format:"%s" "$here")
+    local author=$(git log -1 --pretty=format:"%an" "$here")
+    local when=$(git log -1 --pretty=format:"%ar" "$here")
+    local stats=$(git diff --shortstat "$here^..$here" 2>/dev/null | sed 's/^ //' || echo "initial commit")
+    
+    echo "${GREEN}▶${RESET} Now at ${BLUE}$short${RESET} ${BOLD}$msg${RESET}"
+    echo "  ${GRAY}$author · $when · $stats${RESET}"
+}
+
+case "${1:-}" in
+    start)
+        git diff-index --quiet HEAD -- || die "Dirty working tree. Stash or commit first"
+        
+        # remember where we are
+        git update-ref "$ANCHOR" HEAD
+        
+        # create or reset nav branch
+        if git show-ref -q "$BRANCH"; then
+            git checkout -q "$BRANCH"
+            git reset -q --hard "$ANCHOR"
+        else
+            git checkout -qb "$BRANCH"
+        fi
+        
+        echo "${GREEN}✓${RESET} Navigation session started"
+        echo ""
+        timeline
+        ;;
+        
+    prev|p|back|b)
+        [[ $(git rev-parse --abbrev-ref HEAD) == "$BRANCH" ]] || die "Not navigating. Run: git nav start"
+        
+        if git rev-parse --verify -q HEAD^ &>/dev/null; then
+            git reset -q --hard HEAD^
+            timeline
+        else
+            echo "${YELLOW}⚠${RESET} Already at oldest commit"
+        fi
+        ;;
+        
+    next|n|forward|f)
+        [[ $(git rev-parse --abbrev-ref HEAD) == "$BRANCH" ]] || die "Not navigating. Run: git nav start"
+        
+        anchor=$(git rev-parse "$ANCHOR" 2>/dev/null || die "No anchor")
+        next=$(git rev-list --ancestry-path HEAD.."$anchor" | tail -1)
+        
+        if [[ -n $next ]]; then
+            git reset -q --hard "$next"
+            timeline
+        else
+            echo "${YELLOW}⚠${RESET} Already at newest commit"
+        fi
+        ;;
+    
+    restore|checkout|use)
+        [[ $(git rev-parse --abbrev-ref HEAD) == "$BRANCH" ]] || die "Not navigating. Run: git nav start"
+        
+        local here=$(git rev-parse HEAD)
+        local short=$(git rev-parse --short "$here")
+        
+        # go back to original branch and apply this commit
+        git checkout -q -
+        git branch -D "$BRANCH" 2>/dev/null || true
+        git update-ref -d "$ANCHOR" 2>/dev/null || true
+        
+        git reset --hard "$here"
+        
+        echo "${GREEN}✓${RESET} Restored to ${BLUE}$short${RESET}"
+        show_current_info
+        ;;
+        
+    stop|end|exit|quit)
+        git checkout -q -
+        git branch -qD "$BRANCH" 2>/dev/null || true
+        git update-ref -d "$ANCHOR" 2>/dev/null || true
+        echo "${GREEN}✓${RESET} Session ended (back to original state)"
+        ;;
+        
+    where|w|status|s|info)
+        timeline
+        ;;
+        
+    *)
+        cat <<EOF
+${BOLD}git nav${RESET} - scrub through commits
+
+  ${GREEN}start${RESET}    Begin from current HEAD
+  ${GREEN}prev${RESET}     Go back one commit (aliases: p, back, b)
+  ${GREEN}next${RESET}     Go forward one commit (aliases: n, forward, f)
+  ${GREEN}where${RESET}    Show timeline & info (aliases: w, status, s)
+  ${GREEN}restore${RESET}  Apply current nav position to your branch (aliases: checkout, use)
+  ${GREEN}stop${RESET}     End session, return to original state (aliases: end, quit)
+
+${GRAY}Example workflow:${RESET}
+  git nav start          ${GRAY}# start navigating${RESET}
+  git nav p              ${GRAY}# go back${RESET}
+  git nav p              ${GRAY}# go back more${RESET}
+  git nav restore        ${GRAY}# found it! apply this commit${RESET}
+EOF
+        ;;
+esac

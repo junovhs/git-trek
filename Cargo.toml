@@ -1,0 +1,29 @@
+[package]
+name = "git-trek"
+version = "0.1.0"
+edition = "2021"
+authors = ["Spencer Nunamaker <junovhs@gmail.com>"]
+description = "🚀 Navigate git history like it's 1989!"
+homepage = "https://github.com/junovhs/git-trek"
+repository = "https://github.com/junovhs/git-trek"
+license = "MIT"
+readme = "README.md"
+keywords = ["git", "cli", "tui", "navigation", "history"]
+categories = ["command-line-utilities", "development-tools"]
+
+[[bin]]
+name = "git-trek"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0"
+clap = { version = "4.5", features = ["derive"] }
+crossterm = "0.28"
+git2 = "0.19"
+ratatui = "0.29"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+opt-level = "z"
