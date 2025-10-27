@@ -11,13 +11,8 @@ jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
-    
-    # --- THIS IS THE FIX ---
-    # Grant the GITHUB_TOKEN write permissions to create a release
     permissions:
       contents: write
-    # --- END OF FIX ---
-      
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
@@ -43,7 +38,9 @@ jobs:
             asset_name: git-trek-linux-x64.tar.gz
             binary_name: git-trek
           - os: macos-latest
-            target: x88_64-apple-darwin
+            # --- THIS IS THE FIX ---
+            target: x86_64-apple-darwin # Corrected from x88_64
+            # --- END OF FIX ---
             asset_name: git-trek-macos-x64.tar.gz
             binary_name: git-trek
           - os: windows-latest
