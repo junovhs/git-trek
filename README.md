@@ -138,4 +138,4 @@ MIT - Go forth and trek!
 
 ---
 
-*Made with 🚀 and rust by developers who think git should be more fun*
+*Made with coffee and rust by developers who think git should be more fun*
