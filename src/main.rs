@@ -5,7 +5,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use git2::{Repository, Oid};
+use git2::{Repository, Oid, StatusOptions};
 use ratatui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout},
@@ -63,30 +63,30 @@ impl App {
         let repo = Repository::open_from_env()
             .context("Not in a git repository")?;
         
-        // Check for clean working tree
         {
-            let statuses = repo.statuses(None)?;
+            let mut opts = StatusOptions::new();
+            opts.include_untracked(true)
+                .recurse_untracked_dirs(true);
+
+            let statuses = repo.statuses(Some(&mut opts))?;
+            
             if !statuses.is_empty() {
                 anyhow::bail!("🚫 Working tree is not clean. Stash or commit your changes first!");
             }
-        } // statuses dropped here
+        }
         
-        // Get HEAD info and extract what we need
         let (head_oid, original_branch) = {
             let head = repo.head()?;
-            let oid = head.target().unwrap();
+            let oid = head.target().context("Could not get OID from HEAD")?;
             let branch = head.shorthand().unwrap_or("HEAD").to_string();
             (oid, branch)
-        }; // head dropped here
+        };
         
-        // Create references
         let nav_branch = "_trek".to_string();
         let anchor_ref = "refs/trek/anchor".to_string();
         
-        // Store anchor
         repo.reference(&anchor_ref, head_oid, true, "git-trek: anchor")?;
         
-        // Create or reset nav branch
         if let Ok(mut branch_ref) = repo.find_reference(&format!("refs/heads/{}", nav_branch)) {
             branch_ref.set_target(head_oid, "git-trek: reset nav branch")?;
             repo.set_head(&format!("refs/heads/{}", nav_branch))?;
@@ -97,7 +97,6 @@ impl App {
         }
         repo.checkout_head(None)?;
         
-        // Load commits
         let commits = Self::load_commits(&repo, head_oid)?;
         let current_index = commits.iter().position(|c| c.oid == head_oid).unwrap_or(0);
         
@@ -128,7 +127,6 @@ impl App {
             let summary = commit.summary().unwrap_or("").to_string();
             let author = commit.author().name().unwrap_or("").to_string();
             
-            // Calculate relative time (simplified)
             let time = commit.time();
             let now = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)?
@@ -143,13 +141,12 @@ impl App {
                 _ => format!("{} weeks ago", diff / 604800),
             };
             
-            // Get stats (simplified - just counting)
             let stats = if commit.parent_count() > 0 {
                 let parent = commit.parent(0)?;
                 let diff = repo.diff_tree_to_tree(
                     Some(&parent.tree()?),
                     Some(&commit.tree()?),
-                    None
+                    None,
                 )?;
                 let stats = diff.stats()?;
                 format!("+{} -{}", stats.insertions(), stats.deletions())
@@ -165,7 +162,7 @@ impl App {
                 stats,
             });
             
-            if commits.len() >= 50 {  // Limit history depth
+            if commits.len() >= 50 {
                 break;
             }
         }
@@ -181,13 +178,9 @@ impl App {
         self.current_index = index;
         let target_oid = self.commits[index].oid;
         
-        // Reset to target commit
         let commit = self.repo.find_commit(target_oid)?;
-        let mut ref_obj = self.repo.find_reference(&format!("refs/heads/{}", self.nav_branch))?;
-        ref_obj.set_target(target_oid, "git-trek: navigate")?;
         self.repo.reset(commit.as_object(), git2::ResetType::Hard, None)?;
         
-        // Adjust scroll to keep current commit visible
         if self.current_index < self.scroll_offset {
             self.scroll_offset = self.current_index;
         } else if self.current_index >= self.scroll_offset + 10 {
@@ -199,7 +192,7 @@ impl App {
     
     fn jump_to_letter(&mut self, letter: char) -> Result<()> {
         let letter_upper = letter.to_ascii_uppercase();
-        if letter_upper >= 'A' && letter_upper <= 'J' {
+        if ('A'..='J').contains(&letter_upper) {
             let target_index = self.scroll_offset + (letter_upper as usize - 'A' as usize);
             self.move_to(target_index)?;
         }
@@ -209,26 +202,21 @@ impl App {
     fn restore(&mut self) -> Result<String> {
         let current_oid = self.commits[self.current_index].oid;
         
-        // Switch back to original branch
         self.repo.set_head(&format!("refs/heads/{}", self.original_branch))?;
         
-        // Reset to selected commit
         let commit = self.repo.find_commit(current_oid)?;
         self.repo.reset(commit.as_object(), git2::ResetType::Hard, None)?;
         
-        // Cleanup
         self.cleanup()?;
         
         Ok(format!("✅ Restored to {}", &current_oid.to_string()[..8]))
     }
     
     fn cleanup(&self) -> Result<()> {
-        // Delete nav branch
         if let Ok(mut branch) = self.repo.find_branch(&self.nav_branch, git2::BranchType::Local) {
             branch.delete()?;
         }
         
-        // Delete anchor ref
         if let Ok(mut anchor) = self.repo.find_reference(&self.anchor_ref) {
             anchor.delete()?;
         }
@@ -237,10 +225,9 @@ impl App {
     }
     
     fn stop(&mut self) -> Result<String> {
-        // Return to original branch at original commit
         self.repo.set_head(&format!("refs/heads/{}", self.original_branch))?;
         let anchor = self.repo.find_reference(&self.anchor_ref)?;
-        let commit = self.repo.find_commit(anchor.target().unwrap())?;
+        let commit = self.repo.find_commit(anchor.target().context("Could not get OID from anchor")?)?;
         self.repo.reset(commit.as_object(), git2::ResetType::Hard, None)?;
         
         self.cleanup()?;
@@ -252,35 +239,27 @@ fn draw_ui(f: &mut Frame, app: &App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(3),   // Header
-            Constraint::Min(10),     // Timeline
-            Constraint::Length(4),   // Info
-            Constraint::Length(3),   // Controls
+            Constraint::Length(3),
+            Constraint::Min(10),
+            Constraint::Length(4),
+            Constraint::Length(3),
         ])
         .split(f.area());
     
-    // Header with retro style
     let header = Paragraph::new(vec![
-        Line::from(vec![
-            Span::raw("╔══════════════════════════════════════════════════════════════╗"),
-        ]),
+        Line::from(vec![Span::raw("╔══════════════════════════════════════════════════════════════╗")]),
         Line::from(vec![
             Span::raw("║ "),
-            Span::styled("🚀 GIT TREK", Style::default()
-                .fg(Color::Cyan)
-                .add_modifier(Modifier::BOLD)),
+            Span::styled("🚀 GIT TREK", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
             Span::raw(" - "),
             Span::styled("STARDATE 2024", Style::default().fg(Color::Yellow)),
             Span::raw("                            ║"),
         ]),
-        Line::from(vec![
-            Span::raw("╚══════════════════════════════════════════════════════════════╝"),
-        ]),
+        Line::from(vec![Span::raw("╚══════════════════════════════════════════════════════════════╝")]),
     ])
     .style(Style::default().fg(Color::Green));
     f.render_widget(header, chunks[0]);
     
-    // Timeline
     let visible_range = app.scroll_offset..std::cmp::min(app.scroll_offset + 10, app.commits.len());
     let mut timeline_lines = vec![];
     
@@ -291,7 +270,7 @@ fn draw_ui(f: &mut Frame, app: &App) {
         let (marker, marker_color) = if commit_idx == app.current_index {
             ("◉", Color::Green)
         } else if commit_idx == app.anchor_index {
-            ("◎", Color::Cyan)  
+            ("◎", Color::Cyan)
         } else {
             ("○", Color::Gray)
         };
@@ -300,17 +279,13 @@ fn draw_ui(f: &mut Frame, app: &App) {
             Span::raw("  "),
             Span::styled(marker, Style::default().fg(marker_color)),
             Span::raw(" "),
-            Span::styled(format!("[{}]", letter), Style::default()
-                .fg(Color::Yellow)
-                .add_modifier(Modifier::BOLD)),
+            Span::styled(format!("[{}]", letter), Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
             Span::raw(" "),
-            Span::styled(&commit.summary, Style::default()
-                .fg(if commit_idx == app.current_index { Color::White } else { Color::Gray })),
+            Span::styled(&commit.summary, Style::default().fg(if commit_idx == app.current_index { Color::White } else { Color::Gray })),
         ]);
         
         timeline_lines.push(line);
         
-        // Add connector line
         if i < 9 && commit_idx < app.commits.len() - 1 {
             timeline_lines.push(Line::from(vec![
                 Span::raw("  "),
@@ -327,7 +302,6 @@ fn draw_ui(f: &mut Frame, app: &App) {
             .title(" TEMPORAL FLUX NAVIGATOR "));
     f.render_widget(timeline, chunks[1]);
     
-    // Current commit info
     let current = &app.commits[app.current_index];
     let hash_str = current.oid.to_string();
     let info_text = vec![
@@ -354,13 +328,12 @@ fn draw_ui(f: &mut Frame, app: &App) {
             .title(" SCAN RESULTS "));
     f.render_widget(info, chunks[2]);
     
-    // Controls & message
     let controls = if let Some(msg) = &app.message {
         Paragraph::new(msg.as_str())
             .style(Style::default().fg(Color::Yellow))
             .alignment(Alignment::Center)
     } else {
-        Paragraph::new("↑↓/WS: Navigate | A-J: Jump | R: Restore | Q: Quit | X: Exit")
+        Paragraph::new("↑↓/WS: Navigate | A-J: Jump | R: Restore | Q: Quit")
             .style(Style::default().fg(Color::DarkGray))
             .alignment(Alignment::Center)
     };
@@ -368,46 +341,35 @@ fn draw_ui(f: &mut Frame, app: &App) {
     f.render_widget(controls, chunks[3]);
 }
 
-// Function signature changed to accept an initialized App
-fn run_interactive(mut app: App) -> Result<()> {
-    // Setup terminal
+// The function that takes over the terminal MUST be responsible for cleaning it up.
+// It now returns a Result<String> with the message to be printed by main.
+fn run_interactive(mut app: App) -> Result<String> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-    
-    // Main loop
+
     loop {
         terminal.draw(|f| draw_ui(f, &app))?;
         
-        // Clear message after displaying
         if app.message.is_some() {
-            std::thread::sleep(Duration::from_millis(100));
             app.message = None;
         }
         
-        if event::poll(Duration::from_millis(100))? {
+        if event::poll(Duration::from_millis(250))? {
             if let Event::Key(key) = event::read()? {
                 if key.kind == KeyEventKind::Press {
                     match key.code {
-                        KeyCode::Char('q') | KeyCode::Char('Q') => {
+                        KeyCode::Char('q') | KeyCode::Char('Q') | KeyCode::Esc => {
                             let msg = app.stop()?;
-                            cleanup_terminal()?;
-                            println!("{}", msg);
-                            break;
+                            cleanup_terminal()?; // Clean up BEFORE returning
+                            return Ok(msg);
                         }
                         KeyCode::Char('r') | KeyCode::Char('R') => {
                             let msg = app.restore()?;
-                            cleanup_terminal()?;
-                            println!("{}", msg);
-                            break;
-                        }
-                        KeyCode::Char('x') | KeyCode::Char('X') => {
-                            let msg = app.stop()?;
-                            cleanup_terminal()?;
-                            println!("{}", msg);
-                            break;
+                            cleanup_terminal()?; // Clean up BEFORE returning
+                            return Ok(msg);
                         }
                         KeyCode::Up | KeyCode::Char('w') | KeyCode::Char('W') => {
                             if app.current_index > 0 {
@@ -423,7 +385,7 @@ fn run_interactive(mut app: App) -> Result<()> {
                                 app.message = Some("🛑 End of history!".into());
                             }
                         }
-                        KeyCode::Char(c) if c.to_ascii_uppercase() >= 'A' && c.to_ascii_uppercase() <= 'J' => {
+                        KeyCode::Char(c) if ('a'..='j').contains(&c.to_ascii_lowercase()) => {
                             app.jump_to_letter(c)?;
                         }
                         _ => {}
@@ -432,35 +394,40 @@ fn run_interactive(mut app: App) -> Result<()> {
             }
         }
     }
-    
-    Ok(())
 }
 
+// This helper function remains the same.
 fn cleanup_terminal() -> Result<()> {
     disable_raw_mode()?;
-    execute!(
-        io::stdout(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )?;
+    execute!(io::stdout(), LeaveAlternateScreen, DisableMouseCapture)?;
     Ok(())
 }
 
+// The main function is now simpler and more robust.
 fn main() -> Result<()> {
     let cli = Cli::parse();
     
     match cli.command {
-        // App initialization now happens *before* entering the interactive runner
         Some(Commands::Start) | None => {
+            // 1. Attempt to create the app. This can fail if the tree is dirty.
             let app = App::new()?;
-            if let Err(e) = run_interactive(app) {
-                // Ensure terminal is cleaned up even if the interactive runner fails
-                cleanup_terminal()?;
-                return Err(e);
-            }
+            
+            // 2. Run the interactive session. This can fail if the terminal has issues.
+            //    We handle cleanup inside run_interactive.
+            let final_message = match run_interactive(app) {
+                Ok(message) => message,
+                Err(e) => {
+                    // If an error happens *during* the interactive session,
+                    // we must still try to clean up the terminal.
+                    cleanup_terminal()?;
+                    return Err(e);
+                }
+            };
+
+            // 3. Print the final message AFTER the terminal has been restored.
+            println!("{}", final_message);
         }
         Some(Commands::Stop) => {
-            // This command doesn't enter the TUI, so its structure is fine
             let mut app = App::new()?;
             let msg = app.stop()?;
             println!("{}", msg);
