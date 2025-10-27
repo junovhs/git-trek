@@ -2,18 +2,22 @@
 
 name: Release
 
-# This workflow runs automatically when you push a new tag
-# that starts with 'v' (e.g., v0.1.0, v0.2.0-beta)
 on:
   push:
     tags:
       - 'v*'
 
 jobs:
-  # This job creates the initial "draft" release on GitHub
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
+    
+    # --- THIS IS THE FIX ---
+    # Grant the GITHUB_TOKEN write permissions to create a release
+    permissions:
+      contents: write
+    # --- END OF FIX ---
+      
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
@@ -28,12 +32,9 @@ jobs:
           draft: false
           prerelease: false
 
-  # This job builds the binaries and uploads them to the release created above
   build-and-upload:
     name: Build & Upload Binaries
-    # This job depends on the release being created first
     needs: create-release
-    # This is the magic: it runs the same steps for all 3 platforms
     strategy:
       matrix:
         include:
@@ -42,7 +43,7 @@ jobs:
             asset_name: git-trek-linux-x64.tar.gz
             binary_name: git-trek
           - os: macos-latest
-            target: x86_64-apple-darwin
+            target: x88_64-apple-darwin
             asset_name: git-trek-macos-x64.tar.gz
             binary_name: git-trek
           - os: windows-latest
@@ -50,7 +51,6 @@ jobs:
             asset_name: git-trek-windows-x64.zip
             binary_name: git-trek.exe
 
-    # Use the OS from the matrix above
     runs-on: ${{ matrix.os }}
 
     steps:
