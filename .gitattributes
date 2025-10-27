@@ -1,0 +1,21 @@
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text=auto
+
+#
+# The above will handle all files NOT found below
+#
+# These files are text and should be normalized (Convert CRLF to LF)
+*.md text
+*.rs text
+*.sh text
+*.toml text
+*.txt text
+*.gitignore text
+*.gitattributes text
+Makefile text
+
+# These files are binary and should be left untouched
+# (Git usually detects this, but it's good to be explicit)
+*.png binary
+*.jpg binary
+*.lock binary
