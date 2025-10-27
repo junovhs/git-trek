@@ -37,8 +37,6 @@
 
 -   **Safe, Non-Destructive Checkout**: The checkout process is designed for safety. It uses a confirmation prompt and places you in a "detached HEAD" state, leaving your original branch completely untouched and making it trivial to return.
 
--   **Thematic Sci-Fi Interface**: A retro-futuristic UI that makes exploring history feel less like a chore and more like an adventure.
-
 -   **Single-Binary Installation**: Once installed, `git-trek` is a single, dependency-free executable that runs anywhere.
 
 ## 🏁 Quick Start
@@ -105,12 +103,6 @@ cargo build --release
 # Install locally for development
 cargo install --path .
 ```
-
-## 🙏 Inspired By
-
--   The simplicity of `git-nav` (the bash predecessor)
--   The power and beauty of `lazygit`
--   The vibes of retro computing and classic sci-fi
 
 ---
 
