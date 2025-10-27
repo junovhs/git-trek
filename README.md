@@ -1,16 +1,17 @@
+
 # 🚀 git-trek
 
 ```
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
-║   ██████╗ ██╗████████╗   ████████╗██████╗ ███████╗██╗  ██╗    ║
-║  ██╔════╝ ██║╚══██╔══╝   ╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝    ║
-║  ██║  ███╗██║   ██║         ██║   ██████╔╝█████╗  █████╔╝     ║
-║  ██║   ██║██║   ██║         ██║   ██╔══██╗██╔══╝  ██╔═██╗     ║
-║  ╚██████╔╝██║   ██║         ██║   ██║  ██║███████╗██║  ██╗    ║
-║   ╚═════╝ ╚═╝   ╚═╝         ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝    ║
+║   ██████╗ ██╗████████╗   ████████╗██████╗ ███████╗██╗  ██╗  ║
+║  ██╔════╝ ██║╚══██╔══╝   ╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝  ║
+║  ██║  ███╗██║   ██║         ██║   ██████╔╝█████╗  █████╔╝   ║
+║  ██║   ██║██║   ██║         ██║   ██╔══██╗██╔══╝  ██╔═██╗   ║
+║  ╚██████╔╝██║   ██║         ██║   ██║  ██║███████╗██║  ██╗  ║
+║   ╚═════╝ ╚═╝   ╚═╝         ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝  ║
 ║                                                               ║
-║            Navigate Git History Like It's 1989!               ║
+║            Navigate Git History Like It's 1989!              ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
 ```
@@ -22,6 +23,40 @@
 </p>
 
 **git-trek** is a highly-visual, interactive TUI that transforms your git history into a navigable timeline. It's a command console for time travel through your codebase, designed for developers who want to safely explore the state of their code at any point in time—without the risk of accidental `git reset`.
+
+## 🏁 Installation
+
+### Prerequisites
+
+The only requirement is the **Rust toolchain**. If you don't have it, you can install it with a single command:
+
+```bash
+# This command will download and run rustup, the official Rust installer
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+### Option 1: Install Directly from GitHub (Recommended)
+
+This is the fastest way to install `git-trek`. The command will fetch the source code, compile it, and place the final binary in your Cargo path, making it immediately available.
+
+```bash
+cargo install --git https://github.com/junovhs/git-trek.git
+```
+
+### Option 2: Build from Source
+
+If you prefer to clone the repository manually:
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/junovhs/git-trek.git
+cd git-trek
+
+# 2. Compile and install the binary
+cargo install --path .
+```
+
+After installation, run `git-trek` from inside any git repository to start.
 
 ## 🎯 Features
 
@@ -37,28 +72,7 @@
 
 -   **Safe, Non-Destructive Checkout**: The checkout process is designed for safety. It uses a confirmation prompt and places you in a "detached HEAD" state, leaving your original branch completely untouched and making it trivial to return.
 
--   **Single-Binary Installation**: Once installed, `git-trek` is a single, dependency-free executable that runs anywhere.
-
-## 🏁 Quick Start
-
-### For End-Users (Recommended)
-
-1.  Download the latest executable for your OS from the [**GitHub Releases page**](https://github.com/junovhs/git-trek/releases/latest).
-2.  Unzip the file and place the `git-trek` binary in a directory that is in your system's `PATH`.
-3.  Run `git-trek` from inside any git repository.
-
-### For Rust Developers
-
-```bash
-# Install directly from crates.io (once published)
-cargo install git-trek
-
-# OR install directly from the GitHub repository
-cargo install --git https://github.com/junovhs/git-trek.git
-
-# Start trekking!
-git-trek
-```
+-   **Thematic Sci-Fi Interface**: A retro-futuristic UI that makes exploring history feel less like a chore and more like an adventure.
 
 ## 🕹️ The Workflow
 
@@ -90,18 +104,11 @@ git-trek
 ## 🛠️ Development
 
 ```bash
-# Clone the repository
-git clone https://github.com/junovhs/git-trek.git
-cd git-trek
-
 # Run in development mode
 cargo run
 
 # Build the optimized release binary
 cargo build --release
-
-# Install locally for development
-cargo install --path .
 ```
 
 ---
