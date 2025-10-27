@@ -25,7 +25,7 @@ fn draw_timeline(f: &mut Frame, app: &App) {
     controls(
         f,
         layout[2],
-        "↑/W ↓/S Move | A–Z Jump | PgUp/PgDn | Home/End | Enter Details | P Pin | Q Quit",
+        "↑/W ↓/S Move • A–Z Jump • PgUp/PgDn • Home/End • Enter Details • p Set Reference • q Quit",
     );
 }
 
@@ -38,7 +38,7 @@ fn draw_detail(f: &mut Frame, app: &App) {
 
     let d = &app.detail;
     let msg = Paragraph::new(d.message.as_str())
-        .block(title("LOG ENTRY", Color::Cyan))
+        .block(title("Commit message", Color::Cyan))
         .wrap(Wrap { trim: false });
     f.render_widget(msg, split[0]);
 
@@ -53,7 +53,7 @@ fn draw_detail(f: &mut Frame, app: &App) {
     let bar = if app.state == AppState::Confirm {
         "Confirm [Y/N]"
     } else {
-        "[Enter] Engage  [Esc] Back  [d] Diff  [P] Mark Pass  [F] Mark Fail"
+        "[Enter] Check out (confirm)  [Esc] Back  [d] Show changed files  [P] Mark Pass  [F] Mark Fail"
     };
     controls(
         f,
@@ -68,7 +68,7 @@ fn draw_detail(f: &mut Frame, app: &App) {
 }
 
 fn render_list(f: &mut Frame, app: &App, area: Rect) {
-    let block = title("TEMPORAL LOG", Color::Magenta);
+    let block = title("Commit timeline", Color::Magenta);
     let inner = block.inner(area);
     f.render_widget(block, area);
 
@@ -168,7 +168,7 @@ fn meta_block(app: &App) -> Paragraph<'static> {
             "Manual: ❌ FAIL"
         }));
     }
-    Paragraph::new(lines).block(title("DATABANK RECORD", Color::Green))
+    Paragraph::new(lines).block(title("About this commit", Color::Green))
 }
 
 fn sensor_block(app: &App) -> Paragraph<'static> {
@@ -201,7 +201,7 @@ fn sensor_block(app: &App) -> Paragraph<'static> {
             ]));
         }
     }
-    Paragraph::new(lines).block(title("SENSOR READINGS", Color::Magenta))
+    Paragraph::new(lines).block(title("What changed here", Color::Magenta))
 }
 
 fn header(app: &App) -> Paragraph<'static> {
@@ -254,16 +254,16 @@ fn draw_help(f: &mut Frame, app: &App) {
     let lines = vec![
         Line::from("git-trek — time travel for debugging"),
         Line::from(""),
-        Line::from("NAVIGATION"),
+        Line::from("NAVIGATION (move without breaking anything)"),
         Line::from("  ↑/W, ↓/S   Move one commit"),
         Line::from("  A–Z        Jump within window (26)"),
         Line::from("  PgUp/PgDn  Page by 26"),
         Line::from("  Home/End   First/Last"),
         Line::from(""),
-        Line::from("DETAILS"),
+        Line::from("DETAILS (open the selected commit)"),
         Line::from("  Enter      Details / Engage (confirm)"),
         Line::from("  d          Toggle changed files list"),
-        Line::from("  p          Pin anchor (◎)"),
+        Line::from("  p          Set reference (◎)"),
         Line::from("  P / F      Mark Pass / Fail"),
         Line::from(""),
         Line::from("MODES"),
@@ -272,10 +272,10 @@ fn draw_help(f: &mut Frame, app: &App) {
         Line::from(""),
         Line::from(format!("POSITION  ({x} of {y})")),
         Line::from(""),
-        Line::from("CLI TIPS"),
+        Line::from("CLI TIPS (optional)"),
         Line::from("  --path <p>    Only commits touching path p"),
-        Line::from("  --cmd <c>     Run tests each move (shows ✅/❌ + ms)"),
-        Line::from("  --autostash   Stash dirty tree on start; pop on exit"),
+        Line::from("  --cmd <c>     Auto-run tests on each commit (shows ✅/❌ + time)"),
+        Line::from("  --autostash   I’ll stash your local edits now and restore them when you quit"),
         Line::from("  --worktree    Use isolated .git-trek-worktree/"),
     ];
     let p = Paragraph::new(lines).alignment(Alignment::Left);
