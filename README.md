@@ -3,35 +3,42 @@
 ```
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
-║   ██████╗ ██╗████████╗   ████████╗██████╗ ███████╗██╗  ██╗  ║
-║  ██╔════╝ ██║╚══██╔══╝   ╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝  ║
-║  ██║  ███╗██║   ██║         ██║   ██████╔╝█████╗  █████╔╝   ║
-║  ██║   ██║██║   ██║         ██║   ██╔══██╗██╔══╝  ██╔═██╗   ║
-║  ╚██████╔╝██║   ██║         ██║   ██║  ██║███████╗██║  ██╗  ║
-║   ╚═════╝ ╚═╝   ╚═╝         ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝  ║
+║   ██████╗ ██╗████████╗   ████████╗██████╗ ███████╗██╗  ██╗    ║
+║  ██╔════╝ ██║╚══██╔══╝   ╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝    ║
+║  ██║  ███╗██║   ██║         ██║   ██████╔╝█████╗  █████╔╝     ║
+║  ██║   ██║██║   ██║         ██║   ██╔══██╗██╔══╝  ██╔═██╗     ║
+║  ╚██████╔╝██║   ██║         ██║   ██║  ██║███████╗██║  ██╗    ║
+║   ╚═════╝ ╚═╝   ╚═╝         ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝    ║
 ║                                                               ║
-║            Navigate Git History Like It's 1989!              ║
+║            Navigate Git History Like It's 1989!               ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
 ```
 
 > *"Captain's Log, Stardate 2024: Where we're going, we don't need `git log --graph`."*
 
+<p align="center">
+  <img src="assets/demo.gif" alt="git-trek demo" width="100%" />
+</p>
+
 **git-trek** is a highly-visual, interactive TUI that transforms your git history into a navigable timeline. It's a command console for time travel through your codebase, designed for developers who want to safely explore the state of their code at any point in time—without the risk of accidental `git reset`.
-
-## ✨ At a Glance
-
-| Timeline View | Detail View |
-| :---: | :---: |
-| ![Timeline View](assets/page1.jpg) | ![Detail View](assets/page2.png) |
 
 ## 🎯 Features
 
 -   **Interactive Timeline Scrubbing**: Navigate your commit history with arrow keys. Your working directory updates in real-time, allowing you to instantly see the state of your code and run tests at any point.
--   **Instant-Jump Navigation**: Each visible commit is labeled `[A]` through `[J]` for immediate, single-keystroke navigation.
+
+    ![Timeline View](assets/page1.jpg)
+
 -   **Detailed Commit Inspection**: Press `Enter` to open a high-detail view of any commit, showing the full commit message, author, date, and diff statistics (files changed, insertions, deletions).
+
+    ![Detail View](assets/page2.png)
+
+-   **Instant-Jump Navigation**: Each visible commit is labeled `[A]` through `[J]` for immediate, single-keystroke navigation.
+
 -   **Safe, Non-Destructive Checkout**: The checkout process is designed for safety. It uses a confirmation prompt and places you in a "detached HEAD" state, leaving your original branch completely untouched and making it trivial to return.
+
 -   **Thematic Sci-Fi Interface**: A retro-futuristic UI that makes exploring history feel less like a chore and more like an adventure.
+
 -   **Single-Binary Installation**: Once installed, `git-trek` is a single, dependency-free executable that runs anywhere.
 
 ## 🏁 Quick Start
