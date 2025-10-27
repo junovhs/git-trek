@@ -19,3 +19,7 @@ Makefile text
 *.png binary
 *.jpg binary
 *.lock binary
+
+Makefile linguist-vendored
+install.sh linguist-vendored
+legacy/original linguist-vendored
