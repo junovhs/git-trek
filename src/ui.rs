@@ -3,17 +3,14 @@ use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style, Stylize},
     text::{Line, Span},
-    widgets::{Block, BorderType, Borders, Paragraph, Wrap},
+    widgets::{Block, BorderType, Borders, Paragraph, Wrap, Clear},
     Frame, Terminal,
 };
 
 use crate::app::{App, AppState, MAX_FILES_SHOWN, WINDOW_SIZE};
 
 pub fn draw(terminal: &mut Terminal<impl ratatui::backend::Backend>, app: &App) -> Result<()> {
-    terminal.draw(|f| match app.state {
-        AppState::Navigating => draw_timeline(f, app),
-        AppState::Detail | AppState::Confirm => draw_detail(f, app),
-    })?;
+    terminal.draw(|f| { if app.help { draw_help(f, app); } else { match app.state { AppState::Navigating => draw_timeline(f, app), AppState::Detail | AppState::Confirm => draw_detail(f, app), } } })?;
     Ok(())
 }
 
@@ -244,4 +241,43 @@ fn kv(k: &str, v: String) -> Line<'static> {
         Span::styled(format!("{k:<8}: "), Style::default().fg(Color::Yellow)),
         Span::raw(v),
     ])
+}
+
+fn draw_help(f: &mut Frame, app: &App) {
+    let area = f.area();
+    let block = title("HELP", Color::Cyan);
+    let inner = block.inner(area);
+    f.render_widget(Clear, inner);
+    f.render_widget(block, area);
+
+    let (x, y) = app.x_of_y();
+    let lines = vec![
+        Line::from("git-trek — time travel for debugging"),
+        Line::from(""),
+        Line::from("NAVIGATION"),
+        Line::from("  ↑/W, ↓/S   Move one commit"),
+        Line::from("  A–Z        Jump within window (26)"),
+        Line::from("  PgUp/PgDn  Page by 26"),
+        Line::from("  Home/End   First/Last"),
+        Line::from(""),
+        Line::from("DETAILS"),
+        Line::from("  Enter      Details / Engage (confirm)"),
+        Line::from("  d          Toggle changed files list"),
+        Line::from("  p          Pin anchor (◎)"),
+        Line::from("  P / F      Mark Pass / Fail"),
+        Line::from(""),
+        Line::from("MODES"),
+        Line::from("  ? or h     Toggle this help"),
+        Line::from("  Q / Esc    Quit / Back"),
+        Line::from(""),
+        Line::from(format!("POSITION  ({x} of {y})")),
+        Line::from(""),
+        Line::from("CLI TIPS"),
+        Line::from("  --path <p>    Only commits touching path p"),
+        Line::from("  --cmd <c>     Run tests each move (shows ✅/❌ + ms)"),
+        Line::from("  --autostash   Stash dirty tree on start; pop on exit"),
+        Line::from("  --worktree    Use isolated .git-trek-worktree/"),
+    ];
+    let p = Paragraph::new(lines).alignment(Alignment::Left);
+    f.render_widget(p, inner);
 }

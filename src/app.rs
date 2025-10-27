@@ -72,6 +72,7 @@ pub struct App {
     pub marks: HashMap<Oid, bool>,
     pub should_quit: bool,
     pub final_message: Option<String>,
+    pub help: bool,
 }
 
 impl App {
@@ -127,6 +128,7 @@ impl App {
             marks: HashMap::new(),
             should_quit: false,
             final_message: None,
+            help: false,
         })
     }
 
@@ -239,6 +241,8 @@ impl App {
     pub fn x_of_y(&self) -> (usize, usize) {
         (self.idx + 1, self.commits.len())
     }
+
+    pub fn toggle_help(&mut self) { self.help = !self.help; }
 
     pub fn detail_for(&self, oid: Oid) -> Option<Detail> {
         if self.commits.get(self.idx).map(|c| c.oid) == Some(oid) {

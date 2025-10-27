@@ -20,11 +20,11 @@ use cli::Cli;
 fn main() -> Result<()> {
     let cli = Cli::parse_checked()?;
     let mut app = App::new(cli)?;
-    setup_terminal()?;
+    let mut terminal = setup_terminal()?;
     app.refresh_view()?; // initial load + optional cmd
 
     while !app.should_quit {
-        draw(&app)?;
+        draw(&mut terminal, &app)?;
         if let Some(msg) = step(&mut app)? {
             app.final_message = Some(msg);
         }
@@ -37,11 +37,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn setup_terminal() -> Result<()> {
-    enable_raw_mode().context("enable_raw_mode")?;
-    execute!(io::stdout(), EnterAlternateScreen, event::EnableMouseCapture).context("enter alt")?;
-    Ok(())
-}
+fn setup_terminal() -> Result<Terminal<CrosstermBackend<io::Stdout>>> { enable_raw_mode().context("enable_raw_mode")?; let mut stdout = io::stdout(); execute!(stdout, EnterAlternateScreen, event::EnableMouseCapture).context("enter alt")?; let backend = CrosstermBackend::new(stdout); Terminal::new(backend).map_err(Into::into) }
 
 fn teardown_terminal() -> Result<()> {
     disable_raw_mode().context("disable_raw_mode")?;
@@ -49,12 +45,7 @@ fn teardown_terminal() -> Result<()> {
     Ok(())
 }
 
-fn draw(app: &App) -> Result<()> {
-    let backend = CrosstermBackend::new(io::stdout());
-    let mut terminal = Terminal::new(backend).context("terminal new")?;
-    ui::draw(&mut terminal, app)?;
-    Ok(())
-}
+fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &App) -> Result<()> { ui::draw(terminal, app) }
 
 fn step(app: &mut App) -> Result<Option<String>> {
     if !event::poll(Duration::from_millis(app.event_poll_ms()))? {
@@ -62,6 +53,15 @@ fn step(app: &mut App) -> Result<Option<String>> {
     }
     let Event::Key(key) = event::read()? else { return Ok(None) };
     if key.kind != KeyEventKind::Press { return Ok(None); }
+
+    // Help overlay key trap
+    if app.help {
+        match key.code {
+            KeyCode::Esc | KeyCode::Char('q') | KeyCode::Char('?' ) | KeyCode::Char('h') | KeyCode::Char('H') => app.toggle_help(),
+            _ => return Ok(None),
+        }
+        return Ok(None);
+    }
 
     match app.state {
         AppState::Navigating => handle_nav(app, key.code),
@@ -83,6 +83,7 @@ fn handle_nav(app: &mut App, code: KeyCode) -> Result<Option<String>> {
         Enter => { app.enter_detail()?; Ok(None) }
         Char('p') | Char('P') => { app.pin_anchor(); Ok(None) }
         Char(c) if c.is_ascii_alphabetic() => { app.jump_letter(c)?; Ok(None) }
+        KeyCode::Char('?') | KeyCode::Char('h') | KeyCode::Char('H') => { app.toggle_help(); Ok(None) },
         _ => Ok(None),
     }
 }
@@ -95,6 +96,7 @@ fn handle_detail(app: &mut App, code: KeyCode) -> Result<Option<String>> {
         Char('d') | Char('D') => { app.toggle_diff(); Ok(None) }
         Char('p') | Char('P') => { app.mark_manual(true); Ok(None) }
         Char('f') | Char('F') => { app.mark_manual(false); Ok(None) }
+        KeyCode::Char('?') | KeyCode::Char('h') | KeyCode::Char('H') => { app.toggle_help(); Ok(None) },
         _ => Ok(None),
     }
 }
@@ -104,6 +106,7 @@ fn handle_confirm(app: &mut App, code: KeyCode) -> Result<Option<String>> {
     match code {
         Char('y') | Char('Y') => app.checkout().map(Some),
         Char('n') | Char('N') | Esc | Backspace => { app.exit_confirm(); Ok(None) }
+        KeyCode::Char('?') | KeyCode::Char('h') | KeyCode::Char('H') => { app.toggle_help(); Ok(None) },
         _ => Ok(None),
     }
 }
