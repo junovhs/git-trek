@@ -2,111 +2,101 @@
 
 use anyhow::{Context, Result};
 use crossterm::{
-    event::{self, Event, KeyCode, KeyEventKind},
+    event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::{io, time::Duration};
 
-mod cli;
 mod app;
+mod cli;
 mod ui;
-mod shell;
 
-use app::{App, AppState};
-use cli::Cli;
+use crate::app::{AppState, App, AnimationDirection, ANIMATION_FRAME_MS, UI_WIDTH};
+use crate::cli::Cli;
 
 fn main() -> Result<()> {
     let cli = Cli::parse_checked()?;
     let mut app = App::new(cli)?;
     let mut terminal = setup_terminal()?;
-    app.refresh_view()?; // initial load + optional cmd
 
-    while !app.should_quit {
-        draw(&mut terminal, &app)?;
-        if let Some(msg) = step(&mut app)? {
-            app.final_message = Some(msg);
-        }
-    }
+    let res = run_app(&mut terminal, &mut app);
 
     teardown_terminal()?;
-    if let Some(m) = app.final_message.take() {
-        println!("{m}");
+
+    if let Err(err) = res {
+        println!("Error: {err:?}");
+    } else if let Some(msg) = app.final_message {
+        println!("{msg}");
     }
     Ok(())
 }
 
-fn setup_terminal() -> Result<Terminal<CrosstermBackend<io::Stdout>>> { enable_raw_mode().context("enable_raw_mode")?; let mut stdout = io::stdout(); execute!(stdout, EnterAlternateScreen, event::EnableMouseCapture).context("enter alt")?; let backend = CrosstermBackend::new(stdout); Terminal::new(backend).map_err(Into::into) }
+fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut App) -> Result<()> {
+    while !app.should_quit {
+        let size = terminal.size()?;
+        app.terminal_too_small = size.width < UI_WIDTH;
+        
+        terminal.draw(|f| ui::draw(f, app))?;
+
+        if app.animation.is_some() {
+            app.on_tick();
+            std::thread::sleep(Duration::from_millis(ANIMATION_FRAME_MS));
+        } else {
+            if app.idx != app.last_checkout_idx {
+                app.update_checkout()?;
+            }
+
+            if event::poll(Duration::from_millis(1000))? {
+                if let Event::Key(key) = event::read()? {
+                    if key.kind == KeyEventKind::Press {
+                        handle_key_event(app, key.code, key.modifiers)?;
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn handle_key_event(app: &mut App, code: KeyCode, modifiers: KeyModifiers) -> Result<()> {
+    if app.terminal_too_small {
+        if code == KeyCode::Char('q') { app.should_quit = true; }
+        return Ok(());
+    }
+    
+    if code == KeyCode::Char('q') || (code == KeyCode::Char('c') && modifiers == KeyModifiers::CONTROL) {
+        return app.stop();
+    }
+    
+    if app.state == AppState::Scanning {
+        match code {
+            KeyCode::Up | KeyCode::Char('k') => app.shift_target(AnimationDirection::Up),
+            KeyCode::Down | KeyCode::Char('j') => app.shift_target(AnimationDirection::Down),
+            KeyCode::Enter => app.toggle_inspect(),
+            _ => {}
+        }
+    } else if app.state == AppState::Inspect {
+        match code {
+            KeyCode::Enter | KeyCode::Esc => app.toggle_inspect(),
+            _ => {}
+        }
+    }
+
+    Ok(())
+}
+
+fn setup_terminal() -> Result<Terminal<CrosstermBackend<io::Stdout>>> {
+    enable_raw_mode().context("failed to enable raw mode")?;
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen).context("failed to enter alternate screen")?;
+    let backend = CrosstermBackend::new(stdout);
+    Terminal::new(backend).map_err(Into::into)
+}
 
 fn teardown_terminal() -> Result<()> {
-    disable_raw_mode().context("disable_raw_mode")?;
-    execute!(io::stdout(), LeaveAlternateScreen, event::DisableMouseCapture).context("leave alt")?;
+    disable_raw_mode().context("failed to disable raw mode")?;
+    execute!(io::stdout(), LeaveAlternateScreen).context("failed to leave alternate screen")?;
     Ok(())
-}
-
-fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &App) -> Result<()> { ui::draw(terminal, app) }
-
-fn step(app: &mut App) -> Result<Option<String>> {
-    if !event::poll(Duration::from_millis(app.event_poll_ms()))? {
-        return Ok(None);
-    }
-    let Event::Key(key) = event::read()? else { return Ok(None) };
-    if key.kind != KeyEventKind::Press { return Ok(None); }
-
-    // Help overlay key trap
-    if app.help {
-        match key.code {
-            KeyCode::Esc | KeyCode::Char('q') | KeyCode::Char('?' ) | KeyCode::Char('h') | KeyCode::Char('H') => app.toggle_help(),
-            _ => return Ok(None),
-        }
-        return Ok(None);
-    }
-
-    match app.state {
-        AppState::Navigating => handle_nav(app, key.code),
-        AppState::Detail => handle_detail(app, key.code),
-        AppState::Confirm => handle_confirm(app, key.code),
-    }
-}
-
-fn handle_nav(app: &mut App, code: KeyCode) -> Result<Option<String>> {
-    use KeyCode::*;
-    match code {
-        Char('q') | Esc => app.stop().map(Some),
-        Up | Char('w') => { app.move_sel(-1)?; Ok(None) }
-        Down | Char('s') => { app.move_sel(1)?; Ok(None) }
-        PageUp => { app.page(-1)?; Ok(None) }
-        PageDown => { app.page(1)?; Ok(None) }
-        Home => { app.home()?; Ok(None) }
-        End => { app.end()?; Ok(None) }
-        Enter => { app.enter_detail()?; Ok(None) }
-        Char('p') | Char('P') => { app.pin_anchor(); Ok(None) }
-        Char(c) if c.is_ascii_alphabetic() => { app.jump_letter(c)?; Ok(None) }
-        KeyCode::Char('?') | KeyCode::Char('h') | KeyCode::Char('H') => { app.toggle_help(); Ok(None) },
-        _ => Ok(None),
-    }
-}
-
-fn handle_detail(app: &mut App, code: KeyCode) -> Result<Option<String>> {
-    use KeyCode::*;
-    match code {
-        Esc | Backspace | Char('q') => { app.exit_detail(); Ok(None) }
-        Enter | Char('c') => { app.enter_confirm(); Ok(None) }
-        Char('d') | Char('D') => { app.toggle_diff(); Ok(None) }
-        Char('p') | Char('P') => { app.mark_manual(true); Ok(None) }
-        Char('f') | Char('F') => { app.mark_manual(false); Ok(None) }
-        KeyCode::Char('?') | KeyCode::Char('h') | KeyCode::Char('H') => { app.toggle_help(); Ok(None) },
-        _ => Ok(None),
-    }
-}
-
-fn handle_confirm(app: &mut App, code: KeyCode) -> Result<Option<String>> {
-    use KeyCode::*;
-    match code {
-        Char('y') | Char('Y') => app.checkout().map(Some),
-        Char('n') | Char('N') | Esc | Backspace => { app.exit_confirm(); Ok(None) }
-        KeyCode::Char('?') | KeyCode::Char('h') | KeyCode::Char('H') => { app.toggle_help(); Ok(None) },
-        _ => Ok(None),
-    }
 }
