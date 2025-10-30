@@ -1,112 +1,107 @@
-#![deny(warnings)]
-
+// FILE: git-trek/src/main.rs
 use anyhow::{Context, Result};
 use crossterm::{
-    event::{self, Event, KeyCode, KeyEventKind},
-    execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+event::{self, Event, KeyCode},
+execute,
+terminal::{
+disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
+},
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
-use std::{io, time::Duration};
-
-mod cli;
+use std::{
+io::{self, Stdout},
+time::Duration,
+};
 mod app;
-mod ui;
+mod cli;
 mod shell;
-
-use app::{App, AppState};
-use cli::Cli;
-
+mod ui;
+use crate::{
+app::{App, AppState, EVENT_POLL_MS},
+cli::Cli,
+};
 fn main() -> Result<()> {
-    let cli = Cli::parse_checked()?;
-    let mut app = App::new(cli)?;
-    let mut terminal = setup_terminal()?;
-    app.refresh_view()?; // initial load + optional cmd
-
-    while !app.should_quit {
-        draw(&mut terminal, &app)?;
-        if let Some(msg) = step(&mut app)? {
-            app.final_message = Some(msg);
-        }
-    }
-
-    teardown_terminal()?;
-    if let Some(m) = app.final_message.take() {
-        println!("{m}");
-    }
-    Ok(())
+let cli = Cli::parse_checked()?;
+let mut terminal = setup_terminal().context("terminal setup")?;
+let mut app = App::new(cli).context("app setup")?;
+let res = run_app(&mut terminal, &mut app);
+restore_terminal(&mut terminal).context("terminal restore")?;
+if let Some(msg) = app.final_message {
+println!("{msg}");
 }
-
-fn setup_terminal() -> Result<Terminal<CrosstermBackend<io::Stdout>>> { enable_raw_mode().context("enable_raw_mode")?; let mut stdout = io::stdout(); execute!(stdout, EnterAlternateScreen, event::EnableMouseCapture).context("enter alt")?; let backend = CrosstermBackend::new(stdout); Terminal::new(backend).map_err(Into::into) }
-
-fn teardown_terminal() -> Result<()> {
-    disable_raw_mode().context("disable_raw_mode")?;
-    execute!(io::stdout(), LeaveAlternateScreen, event::DisableMouseCapture).context("leave alt")?;
-    Ok(())
+if let Err(e) = res {
+eprintln!("Error: {e:?}");
+return Err(e);
 }
-
-fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &App) -> Result<()> { ui::draw(terminal, app) }
-
-fn step(app: &mut App) -> Result<Option<String>> {
-    if !event::poll(Duration::from_millis(app.event_poll_ms()))? {
-        return Ok(None);
-    }
-    let Event::Key(key) = event::read()? else { return Ok(None) };
-    if key.kind != KeyEventKind::Press { return Ok(None); }
-
-    // Help overlay key trap
-    if app.help {
-        match key.code {
-            KeyCode::Esc | KeyCode::Char('q') | KeyCode::Char('?' ) | KeyCode::Char('h') | KeyCode::Char('H') => app.toggle_help(),
-            _ => return Ok(None),
-        }
-        return Ok(None);
-    }
-
-    match app.state {
-        AppState::Navigating => handle_nav(app, key.code),
-        AppState::Detail => handle_detail(app, key.code),
-        AppState::Confirm => handle_confirm(app, key.code),
-    }
+Ok(())
 }
-
-fn handle_nav(app: &mut App, code: KeyCode) -> Result<Option<String>> {
-    use KeyCode::*;
-    match code {
-        Char('q') | Esc => app.stop().map(Some),
-        Up | Char('w') => { app.move_sel(-1)?; Ok(None) }
-        Down | Char('s') => { app.move_sel(1)?; Ok(None) }
-        PageUp => { app.page(-1)?; Ok(None) }
-        PageDown => { app.page(1)?; Ok(None) }
-        Home => { app.home()?; Ok(None) }
-        End => { app.end()?; Ok(None) }
-        Enter => { app.enter_detail()?; Ok(None) }
-        Char('p') | Char('P') => { app.pin_anchor(); Ok(None) }
-        Char(c) if c.is_ascii_alphabetic() => { app.jump_letter(c)?; Ok(None) }
-        KeyCode::Char('?') | KeyCode::Char('h') | KeyCode::Char('H') => { app.toggle_help(); Ok(None) },
-        _ => Ok(None),
-    }
+fn run_app(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) -> Result<()> {
+while !app.should_quit {
+terminal.draw(|f| ui::draw(f, app))?;
+if event::poll(Duration::from_millis(EVENT_POLL_MS))? {
+if let Event::Key(key) = event::read()? {
+match app.state {
+AppState::Browsing => handle_browsing(app, key.code)?,
+AppState::ViewingDetail => handle_detail(app, key.code),
+AppState::ConfirmingCheckout => handle_confirm(app, key.code)?,
+AppState::ShowingHelp => {
+if matches!(key.code, KeyCode::Esc | KeyCode::Backspace | KeyCode::Char('q' | '?' | 'h' | 'H')) {
+app.toggle_help();
 }
-
-fn handle_detail(app: &mut App, code: KeyCode) -> Result<Option<String>> {
-    use KeyCode::*;
-    match code {
-        Esc | Backspace | Char('q') => { app.exit_detail(); Ok(None) }
-        Enter | Char('c') => { app.enter_confirm(); Ok(None) }
-        Char('d') | Char('D') => { app.toggle_diff(); Ok(None) }
-        Char('p') | Char('P') => { app.mark_manual(true); Ok(None) }
-        Char('f') | Char('F') => { app.mark_manual(false); Ok(None) }
-        KeyCode::Char('?') | KeyCode::Char('h') | KeyCode::Char('H') => { app.toggle_help(); Ok(None) },
-        _ => Ok(None),
-    }
 }
-
-fn handle_confirm(app: &mut App, code: KeyCode) -> Result<Option<String>> {
-    use KeyCode::*;
-    match code {
-        Char('y') | Char('Y') => app.checkout().map(Some),
-        Char('n') | Char('N') | Esc | Backspace => { app.exit_confirm(); Ok(None) }
-        KeyCode::Char('?') | KeyCode::Char('h') | KeyCode::Char('H') => { app.toggle_help(); Ok(None) },
-        _ => Ok(None),
-    }
+}
+}
+}
+}
+Ok(())
+}
+fn handle_browsing(app: &mut App, code: KeyCode) -> Result<()> {
+match code {
+KeyCode::Esc | KeyCode::Char('q') => app.stop()?,
+KeyCode::Up | KeyCode::Char('k') => app.move_sel(-1)?,
+KeyCode::Down | KeyCode::Char('j') => app.move_sel(1)?,
+KeyCode::PageUp => app.page(-1)?,
+KeyCode::PageDown => app.page(1)?,
+KeyCode::Home => app.home()?,
+KeyCode::End => app.end()?,
+KeyCode::Enter => app.enter_detail(),
+KeyCode::Char('p' | 'P') => app.pin_anchor(),
+KeyCode::Char('?' | 'h' | 'H') => app.toggle_help(),
+_ => {}
+}
+Ok(())
+}
+fn handle_detail(app: &mut App, code: KeyCode) {
+match code {
+KeyCode::Esc | KeyCode::Backspace | KeyCode::Char('q') => app.exit_detail(),
+KeyCode::Enter | KeyCode::Char('c') => app.enter_confirm(),
+KeyCode::Char('d' | 'D') => app.diff_full = !app.diff_full,
+KeyCode::Char('p' | 'P') => app.mark_manual(true),
+KeyCode::Char('f' | 'F') => app.mark_manual(false),
+KeyCode::Char('?' | 'h' | 'H') => app.toggle_help(),
+_ => {}
+}
+}
+fn handle_confirm(app: &mut App, code: KeyCode) -> Result<()> {
+match code {
+KeyCode::Char('y' | 'Y') => app.checkout()?,
+KeyCode::Char('n' | 'N') | KeyCode::Esc | KeyCode::Backspace => app.exit_confirm(),
+KeyCode::Char('?' | 'h' | 'H') => app.toggle_help(),
+_ => {}
+}
+Ok(())
+}
+fn setup_terminal() -> Result<Terminal<CrosstermBackend<Stdout>>> {
+let mut stdout = io::stdout();
+enable_raw_mode()?;
+execute!(stdout, EnterAlternateScreen)?;
+let backend = CrosstermBackend::new(stdout);
+let terminal = Terminal::new(backend)?;
+Ok(terminal)
+}
+fn restore_terminal(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<()> {
+disable_raw_mode()?;
+execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+terminal.show_cursor()?;
+Ok(())
 }

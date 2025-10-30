@@ -1,283 +1,185 @@
-use anyhow::Result;
+// FILE: git-trek/src/ui.rs
+use crate::app::{format_oid, format_summary, App, AppState, WINDOW_SIZE};
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Style, Stylize},
+    layout::{Constraint, Direction, Layout, Rect},
+    style::{Color, Style},
     text::{Line, Span},
-    widgets::{Block, BorderType, Borders, Paragraph, Wrap, Clear},
-    Frame, Terminal,
+    widgets::{self, Block, Borders, Cell, Clear, Paragraph, Row, Table},
+    Frame,
 };
 
-use crate::app::{App, AppState, MAX_FILES_SHOWN, WINDOW_SIZE};
-
-pub fn draw(terminal: &mut Terminal<impl ratatui::backend::Backend>, app: &App) -> Result<()> {
-    terminal.draw(|f| { if app.help { draw_help(f, app); } else { match app.state { AppState::Navigating => draw_timeline(f, app), AppState::Detail | AppState::Confirm => draw_detail(f, app), } } })?;
-    Ok(())
-}
-
-fn draw_timeline(f: &mut Frame, app: &App) {
-    let layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Length(3), Constraint::Min(1), Constraint::Length(3)])
+// FILE: git-trek/src/ui.rs | FUNCTION: draw
+pub fn draw(f: &mut Frame, app: &App) {
+    let chunks = Layout::default()
+        .constraints([Constraint::Min(0), Constraint::Length(1)].as_ref()) // <-- CORRECTED from Constraint.Length
         .split(f.area());
 
-    f.render_widget(header(app), layout[0]);
-    render_list(f, app, layout[1]);
-    controls(
-        f,
-        layout[2],
-        "↑/W ↓/S Move • A–Z Jump • PgUp/PgDn • Home/End • Enter Details • p Set Reference • q Quit",
-    );
+    draw_main(f, chunks[0], app);
+    draw_footer(f, chunks[1], app);
+
+    if app.state == AppState::ShowingHelp {
+        draw_help(f, f.area());
+    } else if app.state == AppState::ConfirmingCheckout {
+        draw_confirm(f, f.area(), app);
+    }
 }
 
-fn draw_detail(f: &mut Frame, app: &App) {
-    let area = f.area();
-    let split = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(60), Constraint::Percentage(40)])
-        .split(area);
-
-    let d = &app.detail;
-    let msg = Paragraph::new(d.message.as_str())
-        .block(title("Commit message", Color::Cyan))
-        .wrap(Wrap { trim: false });
-    f.render_widget(msg, split[0]);
-
-    let halves = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-        .split(split[1]);
-
-    f.render_widget(meta_block(app), halves[0]);
-    f.render_widget(sensor_block(app), halves[1]);
-
-    let bar = if app.state == AppState::Confirm {
-        "Confirm [Y/N]"
-    } else {
-        "[Enter] Check out (confirm)  [Esc] Back  [d] Show changed files  [P] Mark Pass  [F] Mark Fail"
-    };
-    controls(
-        f,
-        Rect {
-            x: area.x,
-            y: area.y + area.height.saturating_sub(1),
-            width: area.width,
-            height: 1,
-        },
-        bar,
-    );
+fn draw_main(f: &mut Frame, area: Rect, app: &App) {
+    if app.state == AppState::ViewingDetail {
+        draw_detail(f, area, app);
+        return;
+    }
+    draw_list(f, area, app);
 }
 
-fn render_list(f: &mut Frame, app: &App, area: Rect) {
-    let block = title("Commit timeline", Color::Magenta);
-    let inner = block.inner(area);
-    f.render_widget(block, area);
+fn draw_list(f: &mut Frame, area: Rect, app: &App) {
+    let header_cells = ["", "oid", "summary"]
+        .iter()
+        .map(|h| Cell::from(*h).style(Style::default().fg(Color::Yellow)));
+    let header = Row::new(header_cells).height(1).bottom_margin(1);
 
-    let end = (app.scroll + WINDOW_SIZE).min(app.commits.len());
-    let slice = app.scroll..end;
+    let items_to_render = app.commits.iter().skip(app.scroll).take(WINDOW_SIZE);
 
-    let mut lines = Vec::with_capacity(WINDOW_SIZE * 2);
-    for (i, idx) in slice.clone().enumerate() {
-        let c = &app.commits[idx];
-        let letter = (b'A' + i as u8) as char;
-        let (mark, color) = if idx == app.idx {
-            ("◉", Color::Cyan)
-        } else if idx == app.anchor {
-            ("◎", Color::Green)
+    let rows = items_to_render.enumerate().map(|(i, c)| {
+        let display_idx = app.scroll + i;
+        let oid_str = format_oid(c.oid);
+        let summary = format_summary(&c.summary);
+        let anchor = if app.anchor == Some(display_idx) { "✓" } else { " " }.to_string();
+        let style = if display_idx == app.idx {
+            Style::default().fg(Color::Black).bg(Color::White)
         } else {
-            ("○", Color::DarkGray)
+            Style::default()
         };
+        Row::new(vec![
+            Cell::from(anchor).style(Style::default().fg(Color::Yellow)),
+            Cell::from(oid_str).style(style),
+            Cell::from(summary).style(style),
+        ])
+    });
 
-        let lbl = app
-            .labels
-            .get(&c.oid)
-            .map(|v| format!(" [{}]", v.join(" | ")))
-            .unwrap_or_default();
-
-        let (badge, bcolor) = app
-            .detail_for(c.oid)
-            .map(|d| {
-                if let Some(m) = d.manual {
-                    return (
-                        if m { "✅" } else { "❌" },
-                        if m { Color::Green } else { Color::Red },
-                    );
-                }
-                if let Some(ok) = d.test_ok {
-                    return (
-                        if ok { "✅" } else { "❌" },
-                        if ok { Color::Green } else { Color::Red },
-                    );
-                }
-                ("•", Color::DarkGray)
-            })
-            .unwrap_or(("•", Color::DarkGray));
-
-        lines.push(Line::from(vec![
-            Span::styled(mark, Style::default().fg(color)),
-            Span::styled(
-                format!(" [{}] ", letter),
-                Style::default().fg(Color::Yellow),
-            ),
-            Span::styled(
-                &c.summary,
-                Style::default().fg(if idx == app.idx {
-                    Color::White
-                } else {
-                    Color::Gray
-                }),
-            ),
-            Span::styled(lbl, Style::default().fg(Color::Yellow)),
-            Span::raw("  "),
-            Span::styled(badge, Style::default().fg(bcolor)),
-        ]));
-        if i < WINDOW_SIZE - 1 && idx < app.commits.len().saturating_sub(1) {
-            lines.push(Line::from(Span::styled(
-                "   ·",
-                Style::default().fg(Color::DarkGray),
-            )));
-        }
-    }
-    f.render_widget(Paragraph::new(lines), inner);
-}
-
-fn meta_block(app: &App) -> Paragraph<'static> {
-    let d = &app.detail;
-    let mut lines: Vec<Line<'static>> = vec![
-        kv("Hash", d.hash.clone()),
-        kv("Author", d.author.clone()),
-        kv("Date", d.date.clone()),
+    let widths = [
+        Constraint::Length(1),
+        Constraint::Length(10),
+        Constraint::Min(40),
     ];
-    let test = match d.test_ok {
-        Some(true) => Line::from(vec![
-            "Test: ".into(),
-            "✅ PASS ".green(),
-            format!("{} ms", d.test_ms.unwrap_or(0)).into(),
-        ]),
-        Some(false) => Line::from(vec![
-            "Test: ".into(),
-            "❌ FAIL ".red(),
-            format!("{} ms", d.test_ms.unwrap_or(0)).into(),
-        ]),
-        None => Line::from("Test: —"),
-    };
-    lines.push(test);
-    if let Some(m) = d.manual {
-        lines.push(Line::from(if m {
-            "Manual: ✅ PASS"
-        } else {
-            "Manual: ❌ FAIL"
-        }));
-    }
-    Paragraph::new(lines).block(title("About this commit", Color::Green))
+    let t = Table::new(rows, widths)
+        .header(header)
+        .block(title("commits", Color::White));
+
+    f.render_widget(t, area);
 }
 
-fn sensor_block(app: &App) -> Paragraph<'static> {
-    let d = &app.detail;
-    let mut lines: Vec<Line<'static>> = vec![
-        kv("Files", d.files_changed.to_string()),
-        Line::from(vec![
-            "Insertions: ".yellow(),
-            format!("+{}", d.insertions).into(),
-        ]),
-        Line::from(vec![
-            "Deletions:  ".yellow(),
-            format!("-{}", d.deletions).into(),
-        ]),
+fn draw_footer(f: &mut Frame, area: Rect, app: &App) {
+    let mut hotkeys = vec![
+        ("q", "quit"),
+        ("j/k/↓/↑", "navigate"),
+        ("p", "pin anchor"),
+        ("Enter", "details"),
     ];
-    if d.show_files {
-        lines.push(Line::from(""));
-        lines.push(Line::from("Changed files:"));
-        for fc in d.files.iter().take(MAX_FILES_SHOWN) {
-            let color = match fc.status.as_str() {
-                "A" => Color::Green,
-                "M" => Color::Yellow,
-                "D" => Color::Red,
-                "R" => Color::Blue,
-                _ => Color::White,
-            };
-            lines.push(Line::from(vec![
-                Span::raw(format!("{:>2} ", fc.status)),
-                Span::styled(fc.path.clone(), Style::default().fg(color)),
-            ]));
-        }
+    if app.state == AppState::ViewingDetail {
+        hotkeys = vec![
+            ("q/Esc", "back"),
+            ("d", "toggle diff"),
+            ("p/f", "pass/fail"),
+            ("c", "confirm checkout"),
+        ]; // <-- ADDED semicolon
     }
-    Paragraph::new(lines).block(title("What changed here", Color::Magenta))
-}
-
-fn header(app: &App) -> Paragraph<'static> {
-    let (x, y) = app.x_of_y();
-    Paragraph::new(Line::from(vec![
-        " ".into(),
-        Span::styled("🚀 GIT TREK", Style::default().fg(Color::Cyan).bold()),
-        format!("  ({x} of {y})").into(),
-        " ".into(),
-    ]))
-    .block(
-        Block::default()
-            .borders(Borders::TOP)
-            .border_type(BorderType::Double)
-            .border_style(Style::default().fg(Color::Green)),
-    )
-    .alignment(Alignment::Center)
-}
-
-fn controls(f: &mut Frame, area: Rect, text: &str) {
-    let p = Paragraph::new(text)
-        .style(Style::default().fg(Color::DarkGray))
-        .alignment(Alignment::Center);
+    if app.state == AppState::ConfirmingCheckout {
+        hotkeys = vec![("y", "confirm"), ("n/Esc", "cancel")]; // <-- ADDED semicolon
+    }
+    if app.state == AppState::ShowingHelp {
+        hotkeys = vec![("q/Esc/?/h", "close help")]; // <-- ADDED semicolon
+    }
+    let spans: Vec<Span> = hotkeys
+        .iter()
+        .flat_map(|(key, desc)| {
+            vec![
+                Span::styled(*key, Style::default().fg(Color::Yellow)),
+                // Inlined format args
+                Span::raw(format!(": {desc} ")),
+            ]
+        })
+        .collect();
+    let text = Line::from(spans);
+    let p = Paragraph::new(text);
     f.render_widget(p, area);
 }
 
-fn title<'a>(t: &'a str, color: Color) -> Block<'a> {
+fn draw_detail(f: &mut Frame, area: Rect, app: &App) {
+    let d = &app.detail;
+    let chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
+        .split(area);
+    let left = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(5), Constraint::Min(10)].as_ref())
+        .split(chunks[0]);
+
+    let meta = vec![
+        Line::from(vec![
+            Span::styled("oid: ", Style::default().fg(Color::Yellow)),
+            Span::raw(d.hash.clone()),
+        ]),
+        Line::from(vec![
+            Span::styled("author: ", Style::default().fg(Color::Yellow)),
+            Span::raw(d.author.clone()),
+        ]),
+        Line::from(vec![
+            Span::styled("time: ", Style::default().fg(Color::Yellow)),
+            Span::raw(d.date.clone()),
+        ]),
+    ];
+    let p = Paragraph::new(meta).block(title("meta", Color::White));
+    f.render_widget(p, left[0]);
+    let msg = Paragraph::new(d.message.clone())
+        .block(title("message", Color::White))
+        .wrap(widgets::Wrap { trim: false });
+    f.render_widget(msg, left[1]);
+    let diff_title = format!("diff (+{} -{})", d.insertions, d.deletions);
+    let p = Paragraph::new("Diff text rendering would go here.").block(title(&diff_title, Color::White));
+    f.render_widget(p, chunks[1]);
+}
+
+fn draw_confirm(f: &mut Frame, area: Rect, app: &App) {
+    let p = &app.commits[app.idx];
+    let text = format!("Are you sure you want to checkout {}?", format_oid(p.oid));
+    let p = Paragraph::new(text).block(title("Confirm Checkout", Color::Red));
+    let area = centered_rect(60, 20, area);
+    f.render_widget(Clear, area);
+    f.render_widget(p, area);
+}
+
+fn draw_help(f: &mut Frame, area: Rect) {
+    let text = "Help:\n\nThis is a help message.";
+    let p = Paragraph::new(text).block(title("Help", Color::Green));
+    let area = centered_rect(60, 50, area);
+    f.render_widget(Clear, area);
+    f.render_widget(p, area);
+}
+
+fn title(t: &str, color: Color) -> Block<'_> {
     Block::default()
         .borders(Borders::ALL)
-        .border_type(BorderType::Double)
-        .border_style(Style::default().fg(color))
-        .title(format!(" {t} "))
+        .title(Span::styled(t, Style::default().fg(color)))
 }
 
-fn kv(k: &str, v: String) -> Line<'static> {
-    Line::from(vec![
-        Span::styled(format!("{k:<8}: "), Style::default().fg(Color::Yellow)),
-        Span::raw(v),
-    ])
-}
+fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage((100 - percent_y) / 2),
+            Constraint::Percentage(percent_y),
+            Constraint::Percentage((100 - percent_y) / 2),
+        ].as_ref())
+        .split(r);
 
-fn draw_help(f: &mut Frame, app: &App) {
-    let area = f.area();
-    let block = title("HELP", Color::Cyan);
-    let inner = block.inner(area);
-    f.render_widget(Clear, inner);
-    f.render_widget(block, area);
-
-    let (x, y) = app.x_of_y();
-    let lines = vec![
-        Line::from("git-trek — time travel for debugging"),
-        Line::from(""),
-        Line::from("NAVIGATION (move without breaking anything)"),
-        Line::from("  ↑/W, ↓/S   Move one commit"),
-        Line::from("  A–Z        Jump within window (26)"),
-        Line::from("  PgUp/PgDn  Page by 26"),
-        Line::from("  Home/End   First/Last"),
-        Line::from(""),
-        Line::from("DETAILS (open the selected commit)"),
-        Line::from("  Enter      Details / Engage (confirm)"),
-        Line::from("  d          Toggle changed files list"),
-        Line::from("  p          Set reference (◎)"),
-        Line::from("  P / F      Mark Pass / Fail"),
-        Line::from(""),
-        Line::from("MODES"),
-        Line::from("  ? or h     Toggle this help"),
-        Line::from("  Q / Esc    Quit / Back"),
-        Line::from(""),
-        Line::from(format!("POSITION  ({x} of {y})")),
-        Line::from(""),
-        Line::from("CLI TIPS (optional)"),
-        Line::from("  --path <p>    Only commits touching path p"),
-        Line::from("  --cmd <c>     Auto-run tests on each commit (shows ✅/❌ + time)"),
-        Line::from("  --autostash   I’ll stash your local edits now and restore them when you quit"),
-        Line::from("  --worktree    Use isolated .git-trek-worktree/"),
-    ];
-    let p = Paragraph::new(lines).alignment(Alignment::Left);
-    f.render_widget(p, inner);
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage((100 - percent_x) / 2),
+            Constraint::Percentage(percent_x),
+            Constraint::Percentage((100 - percent_x) / 2),
+        ].as_ref())
+        .split(popup_layout[1])[1]
 }
