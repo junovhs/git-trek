@@ -1,116 +1,205 @@
-
-# 🚀 git-trek
-
 ```
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
-║   ██████╗ ██╗████████╗   ████████╗██████╗ ███████╗██╗  ██╗  ║
-║  ██╔════╝ ██║╚══██╔══╝   ╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝  ║
-║  ██║  ███╗██║   ██║         ██║   ██████╔╝█████╗  █████╔╝   ║
-║  ██║   ██║██║   ██║         ██║   ██╔══██╗██╔══╝  ██╔═██╗   ║
-║  ╚██████╔╝██║   ██║         ██║   ██║  ██║███████╗██║  ██╗  ║
-║   ╚═════╝ ╚═╝   ╚═╝         ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝  ║
+║   ██████╗ ██╗████████╗   ████████╗██████╗ ███████╗██╗  ██╗    ║
+║  ██╔════╝ ██║╚══██╔══╝   ╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝    ║
+║  ██║  ███╗██║   ██║         ██║   ██████╔╝█████╗  █████╔╝     ║
+║  ██║   ██║██║   ██║         ██║   ██╔══██╗██╔══╝  ██╔═██╗     ║
+║  ╚██████╔╝██║   ██║         ██║   ██║  ██║███████╗██║  ██╗    ║
+║   ╚═════╝ ╚═╝   ╚═╝         ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝    ║
 ║                                                               ║
-║            Navigate Git History Like It's 1989!              ║
+║         Navigate Git History Like SNES Save Files!            ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
 ```
 
-> *"Captain's Log, Stardate 2024: Where we're going, we don't need `git log --graph`."*
+> *"Captain's Log, Stardate 2025: Where we're going, we don't need `git log --graph`."*
 
 <p align="center">
   <img src="assets/demo.gif" alt="git-trek demo" width="100%" />
 </p>
 
-**git-trek** is a highly-visual, interactive TUI that transforms your git history into a navigable timeline. It's a command console for time travel through your codebase, designed for developers who want to safely explore the state of their code at any point in time—without the risk of accidental `git reset`.
+**git-trek** is a card-based, retro-futuristic TUI that transforms your git history into a navigable deck of commits. Scrub through time with left/right navigation while your working directory updates in real-time, letting you see and test your code at any point in history—without the fear of breaking anything.
 
 ## 🏁 Installation
 
 ### Prerequisites
 
-The only requirement is the **Rust toolchain**. If you don't have it, you can install it with a single command:
+The only requirement is the **Rust toolchain**:
 
 ```bash
-# This command will download and run rustup, the official Rust installer
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-### Option 1: Install Directly from GitHub (Recommended)
+### Development (Recommended)
 
-This is the fastest way to install `git-trek`. The command will fetch the source code, compile it, and place the final binary in your Cargo path, making it immediately available.
-
-```bash
-cargo install --git https://github.com/junovhs/git-trek.git
-```
-
-### Option 2: Build from Source
-
-If you prefer to clone the repository manually:
+**Clone and run locally without touching your PATH:**
 
 ```bash
-# 1. Clone the repository
 git clone https://github.com/junovhs/git-trek.git
 cd git-trek
+cargo run --release
+```
 
-# 2. Compile and install the binary
+This keeps everything isolated. No global installs, no PATH pollution. Perfect for hacking on git-trek or testing it out.
+
+**To use from any directory**, create an alias in your shell config:
+
+```bash
+# Add to ~/.bashrc or ~/.zshrc
+alias gt='/path/to/git-trek/target/release/git-trek'
+```
+
+### Production Install (When You're Ready to Ship)
+
+**Only install globally when you're sure you want it permanently:**
+
+```bash
 cargo install --path .
 ```
 
-After installation, run `git-trek` from inside any git repository to start.
+This places the binary in `~/.cargo/bin/` and makes `git-trek` available everywhere.
+
+**To uninstall:**
+
+```bash
+cargo uninstall git-trek
+```
+
+---
 
 ## 🎯 Features
 
--   **Interactive Timeline Scrubbing**: Navigate your commit history with arrow keys. Your working directory updates in real-time, allowing you to instantly see the state of your code and run tests at any point.
+### 🃏 Card-Based Navigation
+Navigate through commits like flipping through SNES save file cards. Three commits visible at once: previous, current (highlighted), and next. Use **left/right arrows** or **A/D** to scrub through time.
 
-    ![Timeline View](assets/page1.jpg)
+### ⚡ Real-Time File Scrubbing
+Your working directory updates as you navigate (with smart debouncing). Watch your editor change in real-time as you explore different points in history. No git commands to memorize—just arrow keys.
 
--   **Detailed Commit Inspection**: Press `Enter` to open a high-detail view of any commit, showing the full commit message, author, date, and diff statistics (files changed, insertions, deletions).
+### 🛡️ Safe, Non-Destructive
+Creates a hidden session branch to safely scrub through history. Your original branch stays untouched. Quit anytime with `Q` and you're instantly back to where you started.
 
-    ![Detail View](assets/page2.png)
+### 🎨 Psychedelic Sci-Fi UI
+Vibrant magenta, cyan, and yellow colors on pure black. The interface feels like a retro space console from 1989. Because exploring git history should look *cool*.
 
--   **Instant-Jump Navigation**: Each visible commit is labeled `[A]` through `[J]` for immediate, single-keystroke navigation.
+### 📊 Detailed Commit Inspection
+Press `Enter` on any card to see full commit details: message, author, timestamp, and diff statistics. All presented in a clean, structured layout.
 
--   **Safe, Non-Destructive Checkout**: The checkout process is designed for safety. It uses a confirmation prompt and places you in a "detached HEAD" state, leaving your original branch completely untouched and making it trivial to return.
+### 🌳 Dirty Tree Handling
+Got uncommitted changes? No problem. git-trek offers three choices:
+- **Stash** - Temporarily save changes (restored on exit)
+- **Continue** - Browse in read-only mode (no checkout allowed)
+- **Quit** - Exit without changes
 
--   **Thematic Sci-Fi Interface**: A retro-futuristic UI that makes exploring history feel less like a chore and more like an adventure.
+No more "working tree dirty" errors blocking you.
+
+---
 
 ## 🕹️ The Workflow
 
-1.  **Launch**: Run `git-trek` in your repository.
-2.  **Navigate**: Use the arrow keys or `A-J` to scrub through the timeline. Watch your editor and file system update instantly.
-3.  **Inspect**: See a commit you're interested in? Press `Enter` to open the detail view and see the full message and stats.
-4.  **Engage**: From the detail view, press `Enter` again to initiate a safe checkout. After a `[Y/N]` confirmation, you'll be placed in a detached HEAD state at that commit.
-5.  **Return**: Quit with `Q` at any time to safely return your branch to its original state.
+1. **Launch**: Run `cargo run --release` (or `git-trek` if installed)
+2. **Browse**: Use **← →** or **A D** to flip through commit cards
+3. **Watch**: Your files update in your editor ~200ms after you stop navigating
+4. **Inspect**: Press **Enter** to see full commit details
+5. **Checkout**: Press **C** from detail view to permanently checkout a commit
+6. **Exit**: Press **Q** anytime to return to your original branch
+
+---
 
 ## ⌨️ Controls
 
-| View | Key | Action |
-| :--- | :--- | :--- |
-| **Timeline** | `↑` `W` / `↓` `S` | Navigate to previous/next commit |
-| | `A` - `J` | Jump directly to labeled commit |
-| | `Enter` | Open the Detail View for the selected commit |
-| | `Q` / `Esc` | Quit the application, restoring original state |
-| **Detail View** | `Enter` / `C` | Proceed to checkout confirmation |
-| | `Q`/`Esc`/`Backspace` | Return to the Timeline View |
-| **Confirmation** | `Y` | Confirm and perform the safe checkout |
-| | `N`/`Esc`/`Backspace`| Cancel and return to the Detail View |
+### Card View (Main)
+| Key | Action |
+|-----|--------|
+| `←` `→` or `A` `D` | Navigate left/right through commit cards |
+| `Enter` | Open detail view for current card |
+| `P` | Pin anchor (marks current position) |
+| `Q` | Quit and restore original branch |
+| `?` | Show help |
+
+### Detail View
+| Key | Action |
+|-----|--------|
+| `Esc` or `Q` | Back to card view |
+| `C` | Checkout this commit (with confirmation) |
+| `T` | Toggle diff view |
+| `P` / `F` | Mark test pass/fail (manual) |
+
+### Checkout Confirmation
+| Key | Action |
+|-----|--------|
+| `Y` | Confirm checkout (detaches HEAD) |
+| `N` or `Esc` | Cancel and return to detail view |
+
+---
 
 ## 🚨 Requirements
 
--   A Git repository.
--   A clean working tree (commit or stash your changes before running).
--   A terminal that supports colors.
+- Git repository
+- Terminal with color support
+- Rust toolchain (for building)
+
+**Note:** git-trek handles dirty working trees gracefully—no need to commit or stash first.
+
+---
 
 ## 🛠️ Development
 
+### Quick Start
 ```bash
-# Run in development mode
+git clone https://github.com/junovhs/git-trek.git
+cd git-trek
 cargo run
+```
 
-# Build the optimized release binary
+### Build Release Binary
+```bash
+cargo build --release
+# Binary is at: target/release/git-trek
+```
+
+### Run Tests
+```bash
+cargo test
+cargo clippy
+```
+
+### Advanced Options
+```bash
+git-trek --autostash      # Auto-stash uncommitted changes
+git-trek --worktree       # Use separate worktree (faster on large repos)
+git-trek --since 2024-01-01  # Only show commits after date
+git-trek --author "name"  # Filter by author
+```
+
+---
+
+## 🎮 Pro Tips
+
+- **Use `--release` for smooth navigation**: Debug builds make git operations slow
+- **Run in large repos**: git-trek shines when you have hundreds of commits
+- **Test different states**: Perfect for bisecting bugs or finding when features were added
+- **Pin anchors**: Use `P` to mark important commits as you explore
+- **Read-only mode**: Great for safely browsing history without checkout privileges
+
+---
+
+## 🐛 Troubleshooting
+
+### "Navigation feels laggy"
+Use `cargo run --release` instead of `cargo run`. Debug builds are 10x slower.
+
+### "Files aren't updating"
+Files update ~200ms after you **stop** navigating (debounced). This prevents the multi-line jump bug while keeping the scrubbing feature.
+
+### "I want to reset everything"
+```bash
+cargo clean
+rm -rf target
 cargo build --release
 ```
 
 ---
 
-*Made with coffee and rust by developers who think git should be more fun.*
+*Made with spite and rust by developers who refuse to memorize git commands.*
+```
