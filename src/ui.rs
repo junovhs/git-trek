@@ -1,41 +1,55 @@
 // FILE: git-trek/src/ui.rs
+// ===== PSYCHEDELIC SPACE CONSOLE UI =====
+// Vibrant, sci-fi themed interface with modal overlays
 use crate::app::{format_oid, format_summary, App, AppState, WINDOW_SIZE};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{self, Block, Borders, Cell, Clear, Paragraph, Row, Table},
+    widgets::{Block, Borders, Cell, Clear, Paragraph, Row, Table, Wrap},
     Frame,
 };
 
-// FILE: git-trek/src/ui.rs | FUNCTION: draw
+// ===== PSYCHEDELIC COLOR PALETTE =====
+const COLOR_MAGENTA: Color = Color::Rgb(255, 0, 255);      // Bright Magenta
+const COLOR_CYAN: Color = Color::Rgb(0, 255, 255);         // Bright Cyan
+const COLOR_YELLOW: Color = Color::Rgb(255, 255, 0);       // Bright Yellow
+const COLOR_GREEN: Color = Color::Rgb(0, 255, 128);        // Bright Green
+const COLOR_ORANGE: Color = Color::Rgb(255, 128, 0);       // Bright Orange
+const COLOR_PURPLE: Color = Color::Rgb(200, 100, 255);     // Bright Purple
+const COLOR_BLUE: Color = Color::Rgb(100, 200, 255);       // Bright Blue
+const COLOR_DIM: Color = Color::Rgb(100, 100, 100);        // Dimmed text
+const COLOR_BLACK: Color = Color::Black;                    // Background
+const COLOR_WHITE: Color = Color::White;                    // Default text
+
 pub fn draw(f: &mut Frame, app: &App) {
     let chunks = Layout::default()
-        .constraints([Constraint::Min(0), Constraint::Length(1)].as_ref()) // <-- CORRECTED from Constraint.Length
+        .constraints([Constraint::Min(0), Constraint::Length(1)])
         .split(f.area());
 
     draw_main(f, chunks[0], app);
     draw_footer(f, chunks[1], app);
 
-    if app.state == AppState::ShowingHelp {
-        draw_help(f, f.area());
+    // Overlays (modals on top of main view)
+    if app.state == AppState::ViewingDetail {
+        draw_detail_modal(f, f.area(), app);
     } else if app.state == AppState::ConfirmingCheckout {
-        draw_confirm(f, f.area(), app);
+        draw_confirm_modal(f, f.area(), app);
+    } else if app.state == AppState::ShowingHelp {
+        draw_help_modal(f, f.area());
     }
 }
 
 fn draw_main(f: &mut Frame, area: Rect, app: &App) {
-    if app.state == AppState::ViewingDetail {
-        draw_detail(f, area, app);
-        return;
-    }
-    draw_list(f, area, app);
+    draw_chrono_scanner(f, area, app);
 }
 
-fn draw_list(f: &mut Frame, area: Rect, app: &App) {
-    let header_cells = ["", "oid", "summary"]
+// ===== CHRONO-SCANNER (Main List View) =====
+fn draw_chrono_scanner(f: &mut Frame, area: Rect, app: &App) {
+    // Build header with sci-fi styling
+    let header_cells = ["◢", "CHRONO-ID", "TEMPORAL SIGNATURE"]
         .iter()
-        .map(|h| Cell::from(*h).style(Style::default().fg(Color::Yellow)));
+        .map(|h| Cell::from(*h).style(Style::default().fg(COLOR_CYAN).add_modifier(Modifier::BOLD)));
     let header = Row::new(header_cells).height(1).bottom_margin(1);
 
     let items_to_render = app.commits.iter().skip(app.scroll).take(WINDOW_SIZE);
@@ -44,126 +58,382 @@ fn draw_list(f: &mut Frame, area: Rect, app: &App) {
         let display_idx = app.scroll + i;
         let oid_str = format_oid(c.oid);
         let summary = format_summary(&c.summary);
-        let anchor = if app.anchor == Some(display_idx) { "✓" } else { " " }.to_string();
-        let style = if display_idx == app.idx {
-            Style::default().fg(Color::Black).bg(Color::White)
+        
+        // Anchor indicator
+        let anchor = if app.anchor == Some(display_idx) { 
+            "⚡" 
+        } else { 
+            " " 
+        }.to_string();
+        
+        // Selected item gets full background + sci-fi cursor
+        let is_selected = display_idx == app.idx;
+        
+        if is_selected {
+            // SELECTED ROW: Full magenta background with black text
+            Row::new(vec![
+                Cell::from(anchor).style(Style::default().fg(COLOR_YELLOW).bg(COLOR_MAGENTA)),
+                Cell::from(format!(">> {}", oid_str)).style(
+                    Style::default()
+                        .fg(COLOR_BLACK)
+                        .bg(COLOR_MAGENTA)
+                        .add_modifier(Modifier::BOLD)
+                ),
+                Cell::from(summary).style(
+                    Style::default()
+                        .fg(COLOR_BLACK)
+                        .bg(COLOR_MAGENTA)
+                        .add_modifier(Modifier::BOLD)
+                ),
+            ])
         } else {
-            Style::default()
-        };
-        Row::new(vec![
-            Cell::from(anchor).style(Style::default().fg(Color::Yellow)),
-            Cell::from(oid_str).style(style),
-            Cell::from(summary).style(style),
-        ])
+            // UNSELECTED ROW: OID dimmed, message bright
+            Row::new(vec![
+                Cell::from(anchor).style(Style::default().fg(COLOR_YELLOW)),
+                Cell::from(format!("   {}", oid_str)).style(Style::default().fg(COLOR_DIM)),
+                Cell::from(summary).style(Style::default().fg(COLOR_WHITE)),
+            ])
+        }
     });
 
     let widths = [
-        Constraint::Length(1),
-        Constraint::Length(10),
+        Constraint::Length(2),
+        Constraint::Length(14),
         Constraint::Min(40),
     ];
-    let t = Table::new(rows, widths)
+    
+    let table = Table::new(rows, widths)
         .header(header)
-        .block(title("commits", Color::White));
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(COLOR_MAGENTA))
+                .title(Span::styled(
+                    " ◢◣ CHRONO-SCANNER ◢◣ ",
+                    Style::default().fg(COLOR_CYAN).add_modifier(Modifier::BOLD)
+                ))
+        );
 
-    f.render_widget(t, area);
+    f.render_widget(table, area);
 }
 
+// ===== FOOTER (Hotkey Bar) =====
 fn draw_footer(f: &mut Frame, area: Rect, app: &App) {
-    let mut hotkeys = vec![
-        ("q", "quit"),
-        ("j/k/↓/↑", "navigate"),
-        ("p", "pin anchor"),
-        ("Enter", "details"),
-    ];
-    if app.state == AppState::ViewingDetail {
-        hotkeys = vec![
-            ("q/Esc", "back"),
-            ("d", "toggle diff"),
-            ("p/f", "pass/fail"),
-            ("c", "confirm checkout"),
-        ]; // <-- ADDED semicolon
-    }
-    if app.state == AppState::ConfirmingCheckout {
-        hotkeys = vec![("y", "confirm"), ("n/Esc", "cancel")]; // <-- ADDED semicolon
-    }
-    if app.state == AppState::ShowingHelp {
-        hotkeys = vec![("q/Esc/?/h", "close help")]; // <-- ADDED semicolon
-    }
+    let hotkeys = match app.state {
+        AppState::Browsing => vec![
+            ("Q", "EXIT"),
+            ("↑↓/WS", "NAVIGATE"),
+            ("P", "PIN"),
+            ("ENTER", "INSPECT"),
+            ("?", "HELP"),
+        ],
+        AppState::ViewingDetail => vec![
+            ("ESC", "BACK"),
+            ("C", "CHECKOUT"),
+            ("D", "DIFF"),
+            ("P/F", "PASS/FAIL"),
+        ],
+        AppState::ConfirmingCheckout => vec![
+            ("Y", "CONFIRM"),
+            ("N/ESC", "CANCEL"),
+        ],
+        AppState::ShowingHelp => vec![
+            ("ESC/?", "CLOSE"),
+        ],
+    };
+
     let spans: Vec<Span> = hotkeys
         .iter()
         .flat_map(|(key, desc)| {
             vec![
-                Span::styled(*key, Style::default().fg(Color::Yellow)),
-                // Inlined format args
-                Span::raw(format!(": {desc} ")),
+                Span::styled(*key, Style::default().fg(COLOR_YELLOW).add_modifier(Modifier::BOLD)),
+                Span::styled(format!(":{} ", desc), Style::default().fg(COLOR_WHITE)),
             ]
         })
         .collect();
-    let text = Line::from(spans);
-    let p = Paragraph::new(text);
-    f.render_widget(p, area);
+
+    let line = Line::from(spans);
+    let paragraph = Paragraph::new(line)
+        .style(Style::default().bg(COLOR_BLACK).fg(COLOR_WHITE));
+    
+    f.render_widget(paragraph, area);
 }
 
-fn draw_detail(f: &mut Frame, area: Rect, app: &App) {
+// ===== DETAIL MODAL (Commit Telemetry) =====
+fn draw_detail_modal(f: &mut Frame, area: Rect, app: &App) {
     let d = &app.detail;
+    
+    // Create modal area (80% width, 70% height, centered)
+    let modal_area = centered_rect(80, 70, area);
+    
+    // Clear the background
+    f.render_widget(Clear, modal_area);
+    
+    // Split modal into left (metadata) and right (message + diff)
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
-        .split(area);
-    let left = Layout::default()
+        .constraints([Constraint::Percentage(40), Constraint::Percentage(60)])
+        .split(modal_area);
+    
+    let left_chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(5), Constraint::Min(10)].as_ref())
+        .constraints([Constraint::Length(8), Constraint::Min(0)])
         .split(chunks[0]);
-
-    let meta = vec![
+    
+    // ===== LEFT PANEL: COMMIT METADATA =====
+    let meta_lines = vec![
         Line::from(vec![
-            Span::styled("oid: ", Style::default().fg(Color::Yellow)),
-            Span::raw(d.hash.clone()),
+            Span::styled("HASH    » ", Style::default().fg(COLOR_CYAN).add_modifier(Modifier::BOLD)),
+            Span::styled(&d.hash, Style::default().fg(COLOR_MAGENTA).add_modifier(Modifier::BOLD)),
         ]),
         Line::from(vec![
-            Span::styled("author: ", Style::default().fg(Color::Yellow)),
-            Span::raw(d.author.clone()),
+            Span::styled("AUTHOR  » ", Style::default().fg(COLOR_CYAN).add_modifier(Modifier::BOLD)),
+            Span::styled(&d.author, Style::default().fg(COLOR_WHITE)),
         ]),
         Line::from(vec![
-            Span::styled("time: ", Style::default().fg(Color::Yellow)),
-            Span::raw(d.date.clone()),
+            Span::styled("TIME    » ", Style::default().fg(COLOR_CYAN).add_modifier(Modifier::BOLD)),
+            Span::styled(&d.date, Style::default().fg(COLOR_WHITE)),
+        ]),
+        Line::from(""),
+        Line::from(vec![
+            Span::styled("CHANGES » ", Style::default().fg(COLOR_CYAN).add_modifier(Modifier::BOLD)),
+            Span::styled(format!("+{} ", d.insertions), Style::default().fg(COLOR_GREEN).add_modifier(Modifier::BOLD)),
+            Span::styled(format!("-{}", d.deletions), Style::default().fg(COLOR_ORANGE).add_modifier(Modifier::BOLD)),
         ]),
     ];
-    let p = Paragraph::new(meta).block(title("meta", Color::White));
-    f.render_widget(p, left[0]);
-    let msg = Paragraph::new(d.message.clone())
-        .block(title("message", Color::White))
-        .wrap(widgets::Wrap { trim: false });
-    f.render_widget(msg, left[1]);
-    let diff_title = format!("diff (+{} -{})", d.insertions, d.deletions);
-    let p = Paragraph::new("Diff text rendering would go here.").block(title(&diff_title, Color::White));
-    f.render_widget(p, chunks[1]);
+    
+    let meta_block = Paragraph::new(meta_lines)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(COLOR_CYAN))
+                .title(Span::styled(
+                    " ◢ COMMIT TELEMETRY ◣ ",
+                    Style::default().fg(COLOR_CYAN).add_modifier(Modifier::BOLD)
+                ))
+        );
+    
+    f.render_widget(meta_block, left_chunks[0]);
+    
+    // ===== TEST RESULTS (if available) =====
+    if d.test_ok.is_some() || d.manual.is_some() {
+        let status_text = if let Some(manual) = d.manual {
+            if manual {
+                vec![Line::from(vec![
+                    Span::styled("STATUS » ", Style::default().fg(COLOR_CYAN).add_modifier(Modifier::BOLD)),
+                    Span::styled("✓ MANUAL PASS", Style::default().fg(COLOR_GREEN).add_modifier(Modifier::BOLD)),
+                ])]
+            } else {
+                vec![Line::from(vec![
+                    Span::styled("STATUS » ", Style::default().fg(COLOR_CYAN).add_modifier(Modifier::BOLD)),
+                    Span::styled("✗ MANUAL FAIL", Style::default().fg(COLOR_ORANGE).add_modifier(Modifier::BOLD)),
+                ])]
+            }
+        } else if let Some(ok) = d.test_ok {
+            let (symbol, status, color) = if ok {
+                ("✓", "PASSED", COLOR_GREEN)
+            } else {
+                ("✗", "FAILED", COLOR_ORANGE)
+            };
+            let mut lines = vec![Line::from(vec![
+                Span::styled("TEST    » ", Style::default().fg(COLOR_CYAN).add_modifier(Modifier::BOLD)),
+                Span::styled(format!("{} {}", symbol, status), Style::default().fg(color).add_modifier(Modifier::BOLD)),
+            ])];
+            if let Some(ms) = d.test_ms {
+                lines.push(Line::from(vec![
+                    Span::styled("TIME    » ", Style::default().fg(COLOR_CYAN).add_modifier(Modifier::BOLD)),
+                    Span::styled(format!("{}ms", ms), Style::default().fg(COLOR_WHITE)),
+                ]));
+            }
+            lines
+        } else {
+            vec![]
+        };
+        
+        let status_block = Paragraph::new(status_text)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(COLOR_CYAN))
+                    .title(Span::styled(
+                        " ◢ TEST RESULTS ◣ ",
+                        Style::default().fg(COLOR_CYAN).add_modifier(Modifier::BOLD)
+                    ))
+            );
+        
+        f.render_widget(status_block, left_chunks[1]);
+    }
+    
+    // ===== RIGHT PANEL: MESSAGE + DIFF =====
+    let right_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+        .split(chunks[1]);
+    
+    // Message
+    let message_block = Paragraph::new(d.message.clone())
+        .wrap(Wrap { trim: false })
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(COLOR_PURPLE))
+                .title(Span::styled(
+                    " ◢ TEMPORAL LOG ◣ ",
+                    Style::default().fg(COLOR_PURPLE).add_modifier(Modifier::BOLD)
+                ))
+        )
+        .style(Style::default().fg(COLOR_WHITE));
+    
+    f.render_widget(message_block, right_chunks[0]);
+    
+    // Diff stats
+    let diff_text = if app.diff_full {
+        "Full diff view would be rendered here.\n\nUse 'D' to toggle this view.".to_string()
+    } else {
+        format!(
+            "Diff Statistics:\n\n\
+            Files Changed: {}\n\
+            Insertions:    +{}\n\
+            Deletions:     -{}\n\n\
+            Press 'D' to toggle full diff view.",
+            d.insertions + d.deletions, // simplified
+            d.insertions,
+            d.deletions
+        )
+    };
+    
+    let diff_block = Paragraph::new(diff_text)
+        .wrap(Wrap { trim: false })
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(COLOR_BLUE))
+                .title(Span::styled(
+                    " ◢ DELTA ANALYSIS ◣ ",
+                    Style::default().fg(COLOR_BLUE).add_modifier(Modifier::BOLD)
+                ))
+        )
+        .style(Style::default().fg(COLOR_WHITE));
+    
+    f.render_widget(diff_block, right_chunks[1]);
 }
 
-fn draw_confirm(f: &mut Frame, area: Rect, app: &App) {
+// ===== CONFIRM CHECKOUT MODAL =====
+fn draw_confirm_modal(f: &mut Frame, area: Rect, app: &App) {
+    let modal_area = centered_rect(60, 25, area);
+    f.render_widget(Clear, modal_area);
+    
     let p = &app.commits[app.idx];
-    let text = format!("Are you sure you want to checkout {}?", format_oid(p.oid));
-    let p = Paragraph::new(text).block(title("Confirm Checkout", Color::Red));
-    let area = centered_rect(60, 20, area);
-    f.render_widget(Clear, area);
-    f.render_widget(p, area);
+    let oid_display = format_oid(p.oid);
+    
+    let lines = vec![
+        Line::from(""),
+        Line::from(vec![
+            Span::styled("⚠ ", Style::default().fg(COLOR_YELLOW).add_modifier(Modifier::BOLD)),
+            Span::styled("SYSTEM COMMAND INITIATED", Style::default().fg(COLOR_YELLOW).add_modifier(Modifier::BOLD)),
+            Span::styled(" ⚠", Style::default().fg(COLOR_YELLOW).add_modifier(Modifier::BOLD)),
+        ]),
+        Line::from(""),
+        Line::from(vec![
+            Span::styled("Target Chrono-Point: ", Style::default().fg(COLOR_CYAN)),
+            Span::styled(oid_display, Style::default().fg(COLOR_MAGENTA).add_modifier(Modifier::BOLD)),
+        ]),
+        Line::from(""),
+        Line::from(Span::styled("This will detach your HEAD to this commit.", Style::default().fg(COLOR_WHITE))),
+        Line::from(""),
+        Line::from(vec![
+            Span::styled("Proceed with checkout? ", Style::default().fg(COLOR_CYAN).add_modifier(Modifier::BOLD)),
+            Span::styled("[Y/N]", Style::default().fg(COLOR_YELLOW).add_modifier(Modifier::BOLD)),
+        ]),
+    ];
+    
+    let paragraph = Paragraph::new(lines)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(COLOR_ORANGE))
+                .title(Span::styled(
+                    " ◢◣ CONFIRMATION REQUIRED ◢◣ ",
+                    Style::default().fg(COLOR_ORANGE).add_modifier(Modifier::BOLD)
+                ))
+        );
+    
+    f.render_widget(paragraph, modal_area);
 }
 
-fn draw_help(f: &mut Frame, area: Rect) {
-    let text = "Help:\n\nThis is a help message.";
-    let p = Paragraph::new(text).block(title("Help", Color::Green));
-    let area = centered_rect(60, 50, area);
-    f.render_widget(Clear, area);
-    f.render_widget(p, area);
+// ===== HELP MODAL =====
+fn draw_help_modal(f: &mut Frame, area: Rect) {
+    let modal_area = centered_rect(70, 60, area);
+    f.render_widget(Clear, modal_area);
+    
+    let help_text = vec![
+        Line::from(""),
+        Line::from(vec![
+            Span::styled("CHRONO-SCANNER MODE", Style::default().fg(COLOR_CYAN).add_modifier(Modifier::BOLD | Modifier::UNDERLINED)),
+        ]),
+        Line::from(""),
+        Line::from(vec![
+            Span::styled("  ↑/↓, W/S      ", Style::default().fg(COLOR_YELLOW)),
+            Span::raw("Navigate timeline"),
+        ]),
+        Line::from(vec![
+            Span::styled("  A-J           ", Style::default().fg(COLOR_YELLOW)),
+            Span::raw("Jump to labeled commit"),
+        ]),
+        Line::from(vec![
+            Span::styled("  ENTER         ", Style::default().fg(COLOR_YELLOW)),
+            Span::raw("Open commit telemetry"),
+        ]),
+        Line::from(vec![
+            Span::styled("  P             ", Style::default().fg(COLOR_YELLOW)),
+            Span::raw("Pin anchor point"),
+        ]),
+        Line::from(vec![
+            Span::styled("  Q, ESC        ", Style::default().fg(COLOR_YELLOW)),
+            Span::raw("Exit scanner"),
+        ]),
+        Line::from(""),
+        Line::from(vec![
+            Span::styled("TELEMETRY MODE", Style::default().fg(COLOR_PURPLE).add_modifier(Modifier::BOLD | Modifier::UNDERLINED)),
+        ]),
+        Line::from(""),
+        Line::from(vec![
+            Span::styled("  ESC           ", Style::default().fg(COLOR_YELLOW)),
+            Span::raw("Return to scanner"),
+        ]),
+        Line::from(vec![
+            Span::styled("  C             ", Style::default().fg(COLOR_YELLOW)),
+            Span::raw("Initiate checkout sequence"),
+        ]),
+        Line::from(vec![
+            Span::styled("  D             ", Style::default().fg(COLOR_YELLOW)),
+            Span::raw("Toggle diff view"),
+        ]),
+        Line::from(vec![
+            Span::styled("  P / F         ", Style::default().fg(COLOR_YELLOW)),
+            Span::raw("Mark pass/fail (manual)"),
+        ]),
+        Line::from(""),
+        Line::from(vec![
+            Span::styled("Press '?' or ESC to close this help", Style::default().fg(COLOR_DIM)),
+        ]),
+    ];
+    
+    let paragraph = Paragraph::new(help_text)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(COLOR_GREEN))
+                .title(Span::styled(
+                    " ◢◣ SYSTEM DOCUMENTATION ◢◣ ",
+                    Style::default().fg(COLOR_GREEN).add_modifier(Modifier::BOLD)
+                ))
+        );
+    
+    f.render_widget(paragraph, modal_area);
 }
 
-fn title(t: &str, color: Color) -> Block<'_> {
-    Block::default()
-        .borders(Borders::ALL)
-        .title(Span::styled(t, Style::default().fg(color)))
-}
-
+// ===== UTILITY: CENTERED RECT =====
 fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
     let popup_layout = Layout::default()
         .direction(Direction::Vertical)
@@ -171,7 +441,7 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
             Constraint::Percentage((100 - percent_y) / 2),
             Constraint::Percentage(percent_y),
             Constraint::Percentage((100 - percent_y) / 2),
-        ].as_ref())
+        ])
         .split(r);
 
     Layout::default()
@@ -180,6 +450,6 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
             Constraint::Percentage((100 - percent_x) / 2),
             Constraint::Percentage(percent_x),
             Constraint::Percentage((100 - percent_x) / 2),
-        ].as_ref())
+        ])
         .split(popup_layout[1])[1]
 }

@@ -30,7 +30,6 @@ pub struct Detail {
     pub author: String,
     pub date: String,
     pub message: String,
-    // pub files_changed: usize, // <-- REMOVED (dead_code)
     pub insertions: usize,
     pub deletions: usize,
     pub test_ok: Option<bool>,
@@ -51,7 +50,6 @@ pub struct App {
     pub repo: Repository,
     pub repo_dir: PathBuf,
     pub commits: Vec<Point>,
-    // pub labels: HashMap<Oid, Vec<String>>, // <-- REMOVED (dead_code)
     pub idx: usize,
     pub scroll: usize,
     pub anchor: Option<usize>,
@@ -90,7 +88,6 @@ impl App {
         };
 
         let commits = load_commits(&repo, &cli, since_ts)?;
-        // let labels = collect_labels(&repo)?; // <-- REMOVED (dead_code)
         let idx = commits.iter().position(|c| c.oid == head_oid).unwrap_or(0);
 
         let mut app = Self {
@@ -98,7 +95,6 @@ impl App {
             repo,
             repo_dir,
             commits,
-            // labels, // <-- REMOVED (dead_code)
             idx,
             scroll: 0,
             anchor: None,
@@ -120,6 +116,9 @@ impl App {
         Ok(app)
     }
 
+    // ===== CRITICAL FIX =====
+    // Removed update_checkout() call from move_sel()
+    // Navigation is now INSTANT and moves one line at a time
     pub fn move_sel(&mut self, delta: isize) -> Result<()> {
         let len = self.commits.len();
         if len == 0 { return Ok(()); }
@@ -129,7 +128,7 @@ impl App {
             self.idx.saturating_add(delta.unsigned_abs())
         };
         self.idx = new_idx.clamp(0, len - 1);
-        self.update_checkout()?;
+        // REMOVED: self.update_checkout()?; <- This was causing the slow multi-line jump!
         self.adjust_scroll();
         self.refresh_view()
     }
@@ -194,13 +193,6 @@ impl App {
         Ok(())
     }
 
-    fn update_checkout(&self) -> Result<()> {
-        let oid = self.commits[self.idx].oid;
-        let commit = self.repo.find_commit(oid)?;
-        self.repo.reset(commit.as_object(), ResetType::Hard, None)?;
-        Ok(())
-    }
-
     fn adjust_scroll(&mut self) {
         if self.commits.is_empty() { return; }
         debug_assert!(self.idx < self.commits.len());
@@ -226,7 +218,7 @@ impl App {
         self.detail.test_ms = Some(ms);
         Ok(())
     }
-// FILE: git-trek/src/app.rs | FUNCTION: load_detail
+
     fn load_detail(&mut self) -> Result<()> {
         let oid = self.commits[self.idx].oid;
         let commit = self.repo.find_commit(oid)?;
@@ -240,7 +232,7 @@ impl App {
         self.detail = Detail {
             hash: format_oid(commit.id()),
             author: commit.author().to_string(),
-            date: ts.to_rfc2822(), // <-- CORRECTED from to_rfc2231
+            date: ts.to_rfc2822(),
             message: commit.message().unwrap_or("").to_string(),
             insertions: stats.insertions(),
             deletions: stats.deletions(),
@@ -250,6 +242,7 @@ impl App {
         };
         Ok(())
     }
+
     fn cleanup(&mut self) -> Result<()> {
         if let Some(name) = &self.session_branch {
             self.repo.set_head(&format!("refs/heads/{}", self.original_branch))?;
@@ -272,13 +265,6 @@ pub fn format_oid(oid: Oid) -> String {
 pub fn format_summary(summary: &str) -> String {
     summary.chars().take(70).collect()
 }
-
-/* REMOVED UNUSED FUNCTION (dead_code)
-pub fn diff_stat(diff: &Diff) -> Result<(usize, usize)> {
-    let stats = diff.stats()?;
-    Ok((stats.insertions(), stats.deletions()))
-}
-*/
 
 fn parse_since(since: Option<&str>) -> Result<Option<i64>> {
     let Some(s) = since else { return Ok(None) };
