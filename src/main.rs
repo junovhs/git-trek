@@ -1,7 +1,8 @@
-// FILE: git-trek/src/main.rs
+// main.rs - COPY THIS ENTIRE FILE
+
 use anyhow::{Context, Result};
 use crossterm::{
-    event::{self, Event, KeyCode},
+    event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
     execute,
     terminal::{
         disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
@@ -19,15 +20,19 @@ mod shell;
 mod ui;
 
 use crate::{
-    app::{App, AppState, EVENT_POLL_MS},
+    app::{App, AppState, EVENT_POLL_MS, VERSION},
     cli::Cli,
 };
 
 fn main() -> Result<()> {
+    eprintln!("git-trek v{}", VERSION);
+    
     let cli = Cli::parse_checked()?;
     let mut terminal = setup_terminal().context("terminal setup")?;
     let mut app = App::new(cli).context("app setup")?;
+    
     let res = run_app(&mut terminal, &mut app);
+    
     restore_terminal(&mut terminal).context("terminal restore")?;
     
     if let Some(msg) = app.final_message {
@@ -45,18 +50,13 @@ fn main() -> Result<()> {
 fn run_app(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) -> Result<()> {
     while !app.should_quit {
         terminal.draw(|f| ui::draw(f, app))?;
+        app.maybe_do_pending_checkout()?;
         
         if event::poll(Duration::from_millis(EVENT_POLL_MS))? {
-            if let Event::Key(key) = event::read()? {
-                match app.state {
-                    AppState::Browsing => handle_browsing(app, key.code)?,
-                    AppState::ViewingDetail => handle_detail(app, key.code),
-                    AppState::ConfirmingCheckout => handle_confirm(app, key.code)?,
-                    AppState::ShowingHelp => {
-                        if matches!(key.code, KeyCode::Esc | KeyCode::Backspace | KeyCode::Char('q' | '?' | 'h' | 'H')) {
-                            app.toggle_help();
-                        }
-                    }
+            if let Event::Key(key_event) = event::read()? {
+                if key_event.modifiers == KeyModifiers::NONE 
+                    || key_event.modifiers == KeyModifiers::SHIFT {
+                    handle_key(app, key_event)?;
                 }
             }
         }
@@ -64,33 +64,60 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) -> 
     Ok(())
 }
 
-fn handle_browsing(app: &mut App, code: KeyCode) -> Result<()> {
+fn handle_key(app: &mut App, key_event: KeyEvent) -> Result<()> {
+    let code = key_event.code;
+    
+    match app.state {
+        AppState::DirtyTreeWarning => handle_dirty_warning(app, code)?,
+        AppState::Browsing => handle_browsing(app, code)?,
+        AppState::ViewingDetail => handle_detail(app, code)?,
+        AppState::ConfirmingCheckout => handle_confirm(app, code)?,
+        AppState::ShowingHelp => handle_help(app, code)?,
+    }
+    
+    Ok(())
+}
+
+fn handle_dirty_warning(app: &mut App, code: KeyCode) -> Result<()> {
     match code {
-        KeyCode::Esc | KeyCode::Char('q' | 'Q') => app.stop()?,
-        KeyCode::Up | KeyCode::Char('k' | 'K' | 'w' | 'W') => app.move_sel(-1)?,
-        KeyCode::Down | KeyCode::Char('j' | 'J' | 's' | 'S') => app.move_sel(1)?,
-        KeyCode::PageUp => app.page(-1)?,
-        KeyCode::PageDown => app.page(1)?,
-        KeyCode::Home => app.home()?,
-        KeyCode::End => app.end()?,
-        KeyCode::Enter => app.enter_detail(),
-        KeyCode::Char('p' | 'P') => app.pin_anchor(),
-        KeyCode::Char('?' | 'h' | 'H') => app.toggle_help(),
+        KeyCode::Char('s' | 'S') => app.handle_dirty_stash()?,
+        KeyCode::Char('c' | 'C') => app.handle_dirty_continue(),
+        KeyCode::Char('q' | 'Q') | KeyCode::Esc => app.handle_dirty_quit()?,
         _ => {}
     }
     Ok(())
 }
 
-fn handle_detail(app: &mut App, code: KeyCode) {
+fn handle_browsing(app: &mut App, code: KeyCode) -> Result<()> {
     match code {
-        KeyCode::Esc | KeyCode::Backspace | KeyCode::Char('q' | 'Q') => app.exit_detail(),
-        KeyCode::Enter | KeyCode::Char('c' | 'C') => app.enter_confirm(),
-        KeyCode::Char('d' | 'D') => app.diff_full = !app.diff_full,
+        KeyCode::Char('q' | 'Q') => app.stop()?,
+        KeyCode::Left | KeyCode::Char('a' | 'A') => app.move_sel(-1)?,
+        KeyCode::Right | KeyCode::Char('d' | 'D') => app.move_sel(1)?,
+        KeyCode::Enter => app.enter_detail(),
+        KeyCode::Char('p' | 'P') => app.pin_anchor(),
+        KeyCode::Char('?' | 'h' | 'H') => app.toggle_help(),
+        KeyCode::Esc => {}
+        _ => {}
+    }
+    Ok(())
+}
+
+fn handle_detail(app: &mut App, code: KeyCode) -> Result<()> {
+    match code {
+        KeyCode::Esc | KeyCode::Backspace => app.exit_detail(),
+        KeyCode::Char('q' | 'Q') => app.exit_detail(),
+        KeyCode::Enter | KeyCode::Char('c' | 'C') => {
+            if !app.read_only {
+                app.enter_confirm();
+            }
+        }
+        KeyCode::Char('t' | 'T') => app.diff_full = !app.diff_full,
         KeyCode::Char('p' | 'P') => app.mark_manual(true),
         KeyCode::Char('f' | 'F') => app.mark_manual(false),
         KeyCode::Char('?' | 'h' | 'H') => app.toggle_help(),
         _ => {}
     }
+    Ok(())
 }
 
 fn handle_confirm(app: &mut App, code: KeyCode) -> Result<()> {
@@ -98,6 +125,15 @@ fn handle_confirm(app: &mut App, code: KeyCode) -> Result<()> {
         KeyCode::Char('y' | 'Y') => app.checkout()?,
         KeyCode::Char('n' | 'N') | KeyCode::Esc | KeyCode::Backspace => app.exit_confirm(),
         KeyCode::Char('?' | 'h' | 'H') => app.toggle_help(),
+        _ => {}
+    }
+    Ok(())
+}
+
+fn handle_help(app: &mut App, code: KeyCode) -> Result<()> {
+    match code {
+        KeyCode::Esc | KeyCode::Backspace | 
+        KeyCode::Char('q' | 'Q' | '?' | 'h' | 'H') => app.toggle_help(),
         _ => {}
     }
     Ok(())
