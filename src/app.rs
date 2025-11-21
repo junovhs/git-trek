@@ -14,7 +14,6 @@ use std::{
 
 use crate::{cli::Cli, shell};
 
-pub const VISIBLE_CARDS: usize = 3;
 pub const EVENT_POLL_MS: u64 = 100;
 pub const CHECKOUT_DEBOUNCE_MS: u64 = 200;
 pub const VERSION: &str = "2.2";
@@ -247,10 +246,9 @@ impl App {
         self.state = AppState::Browsing;
     }
 
-    pub fn handle_dirty_quit(&mut self) -> Result<()> {
+    pub fn handle_dirty_quit(&mut self) {
         self.should_quit = true;
         self.final_message = Some("Exited without changes.".into());
-        Ok(())
     }
 
     fn refresh_view(&mut self) -> Result<()> {
@@ -276,7 +274,9 @@ impl App {
             return Ok(());
         }
         
-        let cmd = self.opts.cmd.clone().unwrap();
+        let Some(cmd) = self.opts.cmd.clone() else {
+            return Ok(());
+        };
         let timeout = (self.opts.cmd_timeout > 0)
             .then(|| Duration::from_secs(self.opts.cmd_timeout));
         
@@ -343,7 +343,7 @@ impl App {
         
         if let Some(dir) = &self.worktree_dir {
             let _ = std::process::Command::new("git")
-                .args(["worktree", "remove", "--force", dir.to_str().unwrap()])
+                .args(["worktree", "remove", "--force", &dir.to_string_lossy()])
                 .status();
         }
         
@@ -364,7 +364,7 @@ fn parse_since(since: Option<&str>) -> Result<Option<i64>> {
     let d = NaiveDate::parse_from_str(s, "%Y-%m-%d")
         .context("--since format")?;
     let ts = DateTime::<Utc>::from_naive_utc_and_offset(
-        d.and_hms_opt(0, 0, 0).unwrap(), 
+        d.and_hms_opt(0, 0, 0).context("invalid time")?, 
         Utc
     ).timestamp();
     Ok(Some(ts))
@@ -390,7 +390,7 @@ fn do_autostash(repo: &mut Repository) -> Result<Oid> {
 fn spawn_worktree() -> Result<(PathBuf, Repository)> {
     let dir = std::env::current_dir()?.join(".git-trek-worktree");
     let ok = std::process::Command::new("git")
-        .args(["worktree", "add", "--force", "--detach", dir.to_str().unwrap(), "HEAD"])
+        .args(["worktree", "add", "--force", "--detach", &dir.to_string_lossy(), "HEAD"])
         .status()?
         .success();
     

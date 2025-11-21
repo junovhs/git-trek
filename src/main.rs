@@ -20,14 +20,25 @@ mod shell;
 mod ui;
 
 use crate::{
-    app::{App, AppState, EVENT_POLL_MS, VERSION},
+    app::{App, AppState, EVENT_POLL_MS},
     cli::Cli,
 };
 
 fn main() -> Result<()> {
-    eprintln!("git-trek v{}", VERSION);
-    
     let cli = Cli::parse_checked()?;
+
+    if cli.dry_run {
+        let app = App::new(cli).context("app setup")?;
+        
+        // Verify rendering doesn't panic
+        let backend = ratatui::backend::TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend)?;
+        terminal.draw(|f| ui::draw(f, &app)).context("dry-run render")?;
+        
+        println!("App initialized and rendered successfully");
+        return Ok(());
+    }
+
     let mut terminal = setup_terminal().context("terminal setup")?;
     let mut app = App::new(cli).context("app setup")?;
     
@@ -70,9 +81,9 @@ fn handle_key(app: &mut App, key_event: KeyEvent) -> Result<()> {
     match app.state {
         AppState::DirtyTreeWarning => handle_dirty_warning(app, code)?,
         AppState::Browsing => handle_browsing(app, code)?,
-        AppState::ViewingDetail => handle_detail(app, code)?,
+        AppState::ViewingDetail => handle_detail(app, code),
         AppState::ConfirmingCheckout => handle_confirm(app, code)?,
-        AppState::ShowingHelp => handle_help(app, code)?,
+        AppState::ShowingHelp => handle_help(app, code),
     }
     
     Ok(())
@@ -82,7 +93,7 @@ fn handle_dirty_warning(app: &mut App, code: KeyCode) -> Result<()> {
     match code {
         KeyCode::Char('s' | 'S') => app.handle_dirty_stash()?,
         KeyCode::Char('c' | 'C') => app.handle_dirty_continue(),
-        KeyCode::Char('q' | 'Q') | KeyCode::Esc => app.handle_dirty_quit()?,
+        KeyCode::Char('q' | 'Q') | KeyCode::Esc => app.handle_dirty_quit(),
         _ => {}
     }
     Ok(())
@@ -96,16 +107,14 @@ fn handle_browsing(app: &mut App, code: KeyCode) -> Result<()> {
         KeyCode::Enter => app.enter_detail(),
         KeyCode::Char('p' | 'P') => app.pin_anchor(),
         KeyCode::Char('?' | 'h' | 'H') => app.toggle_help(),
-        KeyCode::Esc => {}
         _ => {}
     }
     Ok(())
 }
 
-fn handle_detail(app: &mut App, code: KeyCode) -> Result<()> {
+fn handle_detail(app: &mut App, code: KeyCode) {
     match code {
-        KeyCode::Esc | KeyCode::Backspace => app.exit_detail(),
-        KeyCode::Char('q' | 'Q') => app.exit_detail(),
+        KeyCode::Esc | KeyCode::Backspace | KeyCode::Char('q' | 'Q') => app.exit_detail(),
         KeyCode::Enter | KeyCode::Char('c' | 'C') => {
             if !app.read_only {
                 app.enter_confirm();
@@ -117,7 +126,6 @@ fn handle_detail(app: &mut App, code: KeyCode) -> Result<()> {
         KeyCode::Char('?' | 'h' | 'H') => app.toggle_help(),
         _ => {}
     }
-    Ok(())
 }
 
 fn handle_confirm(app: &mut App, code: KeyCode) -> Result<()> {
@@ -130,13 +138,12 @@ fn handle_confirm(app: &mut App, code: KeyCode) -> Result<()> {
     Ok(())
 }
 
-fn handle_help(app: &mut App, code: KeyCode) -> Result<()> {
+fn handle_help(app: &mut App, code: KeyCode) {
     match code {
         KeyCode::Esc | KeyCode::Backspace | 
         KeyCode::Char('q' | 'Q' | '?' | 'h' | 'H') => app.toggle_help(),
         _ => {}
     }
-    Ok(())
 }
 
 fn setup_terminal() -> Result<Terminal<CrosstermBackend<Stdout>>> {

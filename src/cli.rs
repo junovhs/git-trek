@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use clap::Parser;
 
 #[derive(Parser, Debug, Clone)]
-#[command(name = "git-trek", about = "Navigate git history like it's 1989")]
+#[command(name = "git-trek", about = "Navigate git history like it's 1989", version)]
 pub struct Cli {
     /// Walk all refs, not just HEAD ancestry
     #[arg(long)]
@@ -39,6 +39,10 @@ pub struct Cli {
     /// Use a temporary git worktree for navigation
     #[arg(long)]
     pub worktree: bool,
+
+    /// Test mode: initialize app and exit (hidden)
+    #[arg(long, hide = true)]
+    pub dry_run: bool,
 }
 
 impl Cli {

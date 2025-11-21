@@ -144,7 +144,7 @@ fn draw_card_row(f: &mut Frame, area: Rect, app: &App) {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 enum CardState {
     Left,
     Selected,
@@ -243,7 +243,7 @@ fn generate_braille_art(seed: &str, bright: bool) -> Vec<Line<'static>> {
     };
 
     let color = if bright {
-        match *hash_bytes.get(0).unwrap_or(&0) as usize % 5 {
+        match *hash_bytes.first().unwrap_or(&0) as usize % 5 {
             0 => COLOR_CYAN,
             1 => COLOR_MAGENTA,
             2 => COLOR_GREEN,
@@ -670,7 +670,7 @@ fn draw_help_modal(f: &mut Frame, area: Rect) {
         ]),
         Line::from(""),
         Line::from(vec![Span::styled(
-            format!("git-trek v{}", VERSION),
+            format!("git-trek v{VERSION}"),
             Style::default().fg(COLOR_DIM),
         )]),
     ];
