@@ -1,4 +1,4 @@
-use crate::app::{App, AppState};
+use crate::app::{App, AppState, VERSION};
 use crate::ui_cards::{draw_card_row, draw_detail_panel};
 use crate::ui_modals::{draw_confirm_modal, draw_dirty_warning_modal, draw_help_modal};
 use ratatui::{

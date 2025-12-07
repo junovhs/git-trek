@@ -13,6 +13,7 @@ use crate::{
         check_if_dirty, do_autostash, head_info, load_commits, new_session,
         parse_since, spawn_worktree, Point,
     },
+    shell,
 };
 
 pub use crate::git_ops::format_oid;

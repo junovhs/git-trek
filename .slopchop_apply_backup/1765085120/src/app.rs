@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use chrono::{DateTime, Utc};
 use git2::{build::CheckoutBuilder, Oid, Repository, ResetType};
 use std::{
     collections::HashMap,
@@ -7,12 +8,12 @@ use std::{
 };
 
 use crate::{
-    app_detail::{load_detail, run_cmd, Detail},
     cli::Cli,
     git_ops::{
         check_if_dirty, do_autostash, head_info, load_commits, new_session,
         parse_since, spawn_worktree, Point,
     },
+    shell,
 };
 
 pub use crate::git_ops::format_oid;
@@ -28,6 +29,19 @@ pub enum AppState {
     ViewingDetail,
     ConfirmingCheckout,
     ShowingHelp,
+}
+
+#[derive(Clone, Default)]
+pub struct Detail {
+    pub hash: String,
+    pub author: String,
+    pub date: String,
+    pub message: String,
+    pub insertions: usize,
+    pub deletions: usize,
+    pub test_ok: Option<bool>,
+    pub test_ms: Option<u128>,
+    pub manual: Option<bool>,
 }
 
 #[allow(clippy::struct_excessive_bools)]
@@ -77,10 +91,19 @@ impl App {
         };
 
         let (head_oid, branch) = head_info(&repo)?;
-        let session_branch = if cli.flags.worktree() { None } else { Some(new_session(&repo, head_oid)?) };
+        let session_branch = if cli.flags.worktree() {
+            None
+        } else {
+            Some(new_session(&repo, head_oid)?)
+        };
+
         let commits = load_commits(&repo, &cli, since_ts)?;
         let idx = commits.iter().position(|c| c.oid == head_oid).unwrap_or(0);
-        let initial_state = if tree_is_dirty && !cli.flags.autostash() { AppState::DirtyTreeWarning } else { AppState::Browsing };
+        let initial_state = if tree_is_dirty && !cli.flags.autostash() {
+            AppState::DirtyTreeWarning
+        } else {
+            AppState::Browsing
+        };
 
         let mut app = Self {
             state: initial_state, repo, repo_dir, commits, idx, anchor: None,
@@ -100,7 +123,11 @@ impl App {
     pub fn move_sel(&mut self, delta: isize) -> Result<()> {
         let len = self.commits.len();
         if len == 0 { return Ok(()); }
-        let new_idx = if delta < 0 { self.idx.saturating_sub(delta.unsigned_abs()) } else { self.idx.saturating_add(delta.unsigned_abs()) };
+        let new_idx = if delta < 0 {
+            self.idx.saturating_sub(delta.unsigned_abs())
+        } else {
+            self.idx.saturating_add(delta.unsigned_abs())
+        };
         self.idx = new_idx.clamp(0, len - 1);
         self.last_nav_time = Instant::now();
         self.pending_checkout = true;
@@ -144,8 +171,15 @@ impl App {
     pub fn exit_detail(&mut self) { self.state = AppState::Browsing; }
     pub fn enter_confirm(&mut self) { if !self.read_only { self.state = AppState::ConfirmingCheckout; } }
     pub fn exit_confirm(&mut self) { self.state = AppState::ViewingDetail; }
-    pub fn toggle_help(&mut self) { self.state = if self.state == AppState::ShowingHelp { AppState::Browsing } else { AppState::ShowingHelp }; }
-    pub fn stop(&mut self) -> Result<()> { self.cleanup()?; self.should_quit = true; self.final_message = Some("Returned to original timeline.".into()); Ok(()) }
+    pub fn toggle_help(&mut self) {
+        self.state = if self.state == AppState::ShowingHelp { AppState::Browsing } else { AppState::ShowingHelp };
+    }
+    pub fn stop(&mut self) -> Result<()> {
+        self.cleanup()?;
+        self.should_quit = true;
+        self.final_message = Some("Returned to original timeline.".into());
+        Ok(())
+    }
 
     pub fn handle_dirty_stash(&mut self) -> Result<()> {
         let sig = self.repo.signature()?;
@@ -160,8 +194,8 @@ impl App {
 
     fn refresh_view(&mut self) -> Result<()> {
         if self.commits.is_empty() { return Ok(()); }
-        self.detail = load_detail(&self.repo, &self.commits[self.idx], &self.tests, &self.marks)?;
-        if self.opts.cmd.is_some() { run_cmd(self)?; }
+        self.load_detail()?;
+        if self.opts.cmd.is_some() { self.run_cmd()?; }
         Ok(())
     }
 
@@ -169,6 +203,41 @@ impl App {
         let oid = self.commits[self.idx].oid;
         let commit = self.repo.find_commit(oid)?;
         self.repo.reset(commit.as_object(), ResetType::Hard, None)?;
+        Ok(())
+    }
+
+    fn run_cmd(&mut self) -> Result<()> {
+        let oid = self.commits[self.idx].oid;
+        if let Some((ok, ms)) = self.tests.get(&oid).copied() {
+            self.detail.test_ok = ok;
+            self.detail.test_ms = ms;
+            return Ok(());
+        }
+        let Some(cmd) = self.opts.cmd.clone() else { return Ok(()); };
+        let timeout = (self.opts.cmd_timeout > 0).then(|| Duration::from_secs(self.opts.cmd_timeout));
+        let start = std::time::Instant::now();
+        let ok = shell::run(&cmd, timeout, &self.repo_dir)?;
+        let ms = start.elapsed().as_millis();
+        self.tests.insert(oid, (Some(ok), Some(ms)));
+        self.detail.test_ok = Some(ok);
+        self.detail.test_ms = Some(ms);
+        Ok(())
+    }
+
+    fn load_detail(&mut self) -> Result<()> {
+        let oid = self.commits[self.idx].oid;
+        let commit = self.repo.find_commit(oid)?;
+        let parent_tree = if commit.parent_count() > 0 { Some(commit.parent(0)?.tree()?) } else { None };
+        let diff = self.repo.diff_tree_to_tree(parent_tree.as_ref(), Some(&commit.tree()?), None)?;
+        let stats = diff.stats()?;
+        let ts = DateTime::<Utc>::from_timestamp(commit.time().seconds(), 0).context("ts")?;
+        let (ok, ms) = self.tests.get(&oid).copied().unwrap_or((None, None));
+        let manual = self.marks.get(&oid).copied();
+        self.detail = Detail {
+            hash: format_oid(commit.id()), author: commit.author().to_string(), date: ts.to_rfc2822(),
+            message: commit.message().unwrap_or("").to_string(), insertions: stats.insertions(),
+            deletions: stats.deletions(), test_ok: ok, test_ms: ms, manual,
+        };
         Ok(())
     }
 

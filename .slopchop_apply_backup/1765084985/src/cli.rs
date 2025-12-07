@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use clap::Parser;
 
-/// Bundled boolean flags to avoid `clippy::struct_excessive_bools`
+/// Bundled boolean flags to avoid clippy::struct_excessive_bools
 #[derive(Debug, Clone, Copy, Default)]
 pub struct CliFlags {
     bits: u8,
@@ -23,7 +23,6 @@ impl CliFlags {
     }
 }
 
-#[allow(clippy::struct_excessive_bools)]
 #[derive(Parser, Debug, Clone)]
 #[command(name = "git-trek", about = "Navigate git history like it's 1989", version)]
 pub struct CliRaw {

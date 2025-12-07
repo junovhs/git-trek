@@ -200,6 +200,3 @@ cargo build --release
 ```
 
 ---
-
-*Made with spite and rust by developers who refuse to memorize git commands.*
-```

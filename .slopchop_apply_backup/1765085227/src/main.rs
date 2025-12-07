@@ -11,7 +11,6 @@ use std::{
 };
 
 mod app;
-mod app_detail;
 mod cli;
 mod git_ops;
 mod shell;

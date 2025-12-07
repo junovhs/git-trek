@@ -35,11 +35,12 @@ fn run_with_timeout(command: &mut Command, timeout: Duration) -> Result<bool> {
         return Ok(status.success());
     }
 
-    if let Some(status) = wait_or_timeout(&mut child, timeout)? {
-        Ok(status.success())
-    } else {
-        child.kill()?;
-        Ok(false)
+    match wait_or_timeout(&mut child, timeout)? {
+        Some(status) => Ok(status.success()),
+        None => {
+            child.kill()?;
+            Ok(false)
+        }
     }
 }
 
