@@ -1,8 +1,0 @@
-Write real tests for functions we lazily marked [no-test]
-CHANGES:
-1. Create tests/app_tests.rs - scroll_timeline, handle_click, view switching
-2. Create tests/treemap_tests.rs - truncate_path, compute_treemap_layout
-3. Create tests/git_tests.rs - format_oid, restore workflow in temp repo
-4. Update src/views/treemap.rs - expose truncate_path and compute_treemap_layout as pub
-5. Update src/git_ops.rs - already pub, just needs tests
-6. Add MouseState tests to input_tests.rs

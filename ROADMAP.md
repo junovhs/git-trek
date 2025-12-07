@@ -20,11 +20,11 @@ Visual git time travel & file recovery
 - [x] **App::current_commit_label() format hash** <!-- test: [no-test] -->
 - [x] **App::files_at_current_commit() sorted by size** <!-- test: [no-test] -->
 - [x] **App::file_health() get status for path** <!-- test: [no-test] -->
-- [x] **App::handle_click() dispatch File/ViewTab** <!-- test: [no-test] -->
-- [x] **App::scroll_timeline() with bounds checking** <!-- test: [no-test] -->
-- [x] **App::set_view()** <!-- test: [no-test] -->
-- [x] **App::next_view()** <!-- test: [no-test] -->
-- [x] **App::prev_view()** <!-- test: [no-test] -->
+- [x] **App::handle_click() dispatch File/ViewTab** <!-- test: tests/app_tests.rs::test_handle_click_file_sets_selected -->
+- [x] **App::scroll_timeline() with bounds checking** <!-- test: tests/app_tests.rs::test_scroll_timeline_forward_from_zero -->
+- [x] **App::set_view()** <!-- test: tests/app_tests.rs::test_set_view_direct -->
+- [x] **App::next_view()** <!-- test: tests/app_tests.rs::test_next_view_full_cycle -->
+- [x] **App::prev_view()** <!-- test: tests/app_tests.rs::test_prev_view_full_cycle -->
 - [x] **App::restore_selected() restore with message** <!-- test: [no-test] -->
 
 ---
@@ -47,15 +47,15 @@ Visual git time travel & file recovery
 
 ## Git Integration ?? CURRENT
 
-- [x] **load_repo_data() main loader function** <!-- test: [no-test] -->
+- [x] **load_repo_data() main loader function** <!-- test: tests/git_tests.rs::test_load_repo_data_single_commit -->
 - [x] **collect_commit_oids() revwalk with TOPOLOGICAL|TIME sort** <!-- test: [no-test] -->
 - [x] **build_commit_info() extract commit metadata** <!-- test: [no-test] -->
 - [x] **get_diff_stats() insertions/deletions count** <!-- test: [no-test] -->
 - [x] **collect_file_snapshots() tree walk for files** <!-- test: [no-test] -->
 - [x] **process_blob_entry() count newlines in blob** <!-- test: [no-test] -->
-- [x] **format_oid() 8-char hash display** <!-- test: [no-test] -->
-- [x] **get_file_content() retrieve file at commit** <!-- test: [no-test] -->
-- [x] **restore_file() write file to disk** <!-- test: [no-test] -->
+- [x] **format_oid() 8-char hash display** <!-- test: tests/git_tests.rs::test_format_oid_length -->
+- [x] **get_file_content() retrieve file at commit** <!-- test: tests/git_tests.rs::test_get_file_content_retrieves_correct_version -->
+- [x] **restore_file() write file to disk** <!-- test: tests/git_tests.rs::test_restore_file_writes_to_disk -->
 
 ---
 
@@ -63,9 +63,9 @@ Visual git time travel & file recovery
 
 - [x] **HitBox struct (rect, id)** <!-- test: [no-test] -->
 - [x] **HitId enum (File, ViewTab, None)** <!-- test: [no-test] -->
-- [x] **MouseState struct (x, y, hover)** <!-- test: [no-test] -->
-- [x] **MouseState::update_position()** <!-- test: [no-test] -->
-- [x] **MouseState::set_hover()** <!-- test: [no-test] -->
+- [x] **MouseState struct (x, y, hover)** <!-- test: tests/input_tests.rs::test_mouse_state_default -->
+- [x] **MouseState::update_position()** <!-- test: tests/input_tests.rs::test_mouse_state_update_position -->
+- [x] **MouseState::set_hover()** <!-- test: tests/input_tests.rs::test_mouse_state_set_hover -->
 - [x] **hit_test() find element under cursor** <!-- test: tests/input_tests.rs::test_hit_test_hit_returns_id -->
 - [x] **handle_mouse() dispatch Moved/Down/Scroll** <!-- test: [no-test] -->
 - [x] **handle_key() keyboard dispatch** <!-- test: [no-test] -->
@@ -108,8 +108,8 @@ Visual git time travel & file recovery
 - [x] **draw_treemap_area() file rectangles** <!-- test: [no-test] -->
 - [x] **draw_status() bottom hints bar** <!-- test: [no-test] -->
 - [x] **health_color() map HealthStatus to Color** <!-- test: [no-test] -->
-- [x] **truncate_path() shorten filename for display** <!-- test: [no-test] -->
-- [x] **compute_treemap_layout() sequential strip algorithm** <!-- test: [no-test] -->
+- [x] **truncate_path() shorten filename for display** <!-- test: tests/treemap_tests.rs::test_truncate_path_short_unchanged -->
+- [x] **compute_treemap_layout() sequential strip algorithm** <!-- test: tests/treemap_tests.rs::test_treemap_layout_rects_within_bounds -->
 - [x] **File rectangle shows truncated name** <!-- test: [no-test] -->
 - [x] **File rectangle shows line count** <!-- test: [no-test] -->
 - [x] **Hit boxes registered for files** <!-- test: [no-test] -->
@@ -120,7 +120,7 @@ Visual git time travel & file recovery
 - [x] **Timeline shows N / total** <!-- test: [no-test] -->
 - [x] **Timeline shows commit summary (40 chars)** <!-- test: [no-test] -->
 - [x] **Files panel shows commit hash** <!-- test: [no-test] -->
-- [x] **Treemap limited to 20 files** <!-- test: [no-test] -->
+- [x] **Treemap limited to 20 files** <!-- test: tests/treemap_tests.rs::test_treemap_layout_respects_20_file_limit -->
 - [ ] **Squarified layout algorithm (better aspect ratios)**
 - [ ] **Filter binary files (gif/png/jpg/etc)**
 - [ ] **Color legend for health status**
