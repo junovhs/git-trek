@@ -1,0 +1,241 @@
+
+[1] TREEMAP VIEW - "Where is my code? What got fucked?"
+Like WinDirStat but for your repo at any commit
+┌─ CODEBASE @ commit 165afe6d ─────────────────────────────────────────┐
+│┌─────────────────────────────┐┌─────────────┐┌──────────────────────┐│
+││                             ││             ││ ui_cards.rs          ││
+││       src/app.rs            ││ main.rs     │├──────────────────────┤│
+││         (152 ln)            ││   (89)      ││ ui_modals.rs         ││
+││           🔴                ││             │├──────────┬───────────┤│
+││                             │├─────────────┤│cli.rs    │ shell.rs  ││
+│├─────────────────────────────┤│ git_ops.rs  ││          │           ││
+││ tests/                      ││             │└──────────┴───────────┘│
+││ ┌─────┬─────┬─────┬────────┐││             │┌──────────────────────┐│
+││ │t1.rs│t2.rs│t3.rs│........│││             ││ Cargo.toml           ││
+││ └─────┴─────┴─────┴────────┘│└─────────────┘└──────────────────────┘│
+└──────────────────────────────────────────────────────────────────────┘
+ 🔴 = shrank >30%   🟡 = changed   🟢 = stable   ⬛ = unchanged
+
+ [scroll] time travel   [hover] highlight   [click] zoom/select
+
+Rectangle SIZE = line count (proportional)
+COLOR = change status since last commit (or vs any pinned commit)
+HOVER = highlight + show stats
+CLICK = zoom into directory OR select file for restore
+SCROLL WHEEL = scrub through time, watch rectangles morph
+
+
+[2] HEATMAP VIEW - "What's been thrashing?"
+Instant pattern recognition: where's the chaos?
+┌─ ACTIVITY HEATMAP ──────────────────────────────────────────────────┐
+│              Jan 1  2  3  4  5  6  7  8  9  10 11 12 13 14          │
+│ src/app.rs     ░░░▒▒▓▓████████▓▒░░░░░░░░░░░░░░░░  ← chaos here     │
+│ src/main.rs    ░░░░░░░░░▒▒▒░░░░░░░░░░░░░░░░░░░░░                    │
+│ src/lib.rs     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  ← stable          │
+│ src/cli.rs     ░░░░░░░░░░░▓▓▓▓░░░░░░░░░░░░░░░░░░                    │
+│ tests/t1.rs    ░░░░░░░░░░░░░░░████░░░░░░░░░░░░░░  ← one big change  │
+│ tests/t2.rs    ░░░░░░░░░░░░░░░████░░░░░░░░░░░░░░                    │
+│ tests/t3.rs    ░░░░░░░░░░░░░░░████░░░░░░░░░░░░░░  ← all at once!    │
+│ Cargo.toml     ░░▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                    │
+└──────────────────────────────────────────────────────────────────────┘
+                              ▲
+                         YOU ARE HERE
+
+ intensity = lines changed   [click row] track file   [click cell] go there
+You'd INSTANTLY see:
+
+"Oh, Jan 4-7, app.rs was getting hammered"
+"The test files all broke at the same time"
+"That file has been stable, probably not the problem"
+
+
+[3] MINIMAP VIEW - "Show me the shape"
+Side-by-side code silhouettes
+┌─ src/app.rs ────────────────────────────────────────────────────────┐
+│  BEFORE (jan 3)              AFTER (jan 5)           DIFF           │
+│ ┌──────────────┐            ┌──────────────┐      ┌──────────────┐  │
+│ │██████████████│            │██████████████│      │              │  │
+│ │██████████████│            │██████████████│      │              │  │
+│ │██████████████│            │██████████████│      │▓▓▓▓▓▓▓▓▓▓▓▓▓▓│  │
+│ │████████      │            │██████████████│      │++++++████████│  │
+│ │██████████████│            │██████████████│      │              │  │
+│ │██████████████│            │              │      │──────────────│  │
+│ │██████████████│            │              │      │──────────────│  │
+│ │████████████  │            │              │      │──────────────│  │
+│ │██████████████│            │              │      │──────────────│  │
+│ └──────────────┘            └──────────────┘      └──────────────┘  │
+│     243 lines                   152 lines          -91 lines (37%)  │
+│                                    ⚠️ SIGNIFICANT SHRINKAGE          │
+└──────────────────────────────────────────────────────────────────────┘
+ [drag endpoints] compare any two commits   [R] restore BEFORE version
+
+Density of pixels = code density (comments lighter, code darker)
+You SEE the deletion as negative space
+Drag to pick comparison points
+
+
+[4] RIVER VIEW - "How did we get here?"
+Stacked stream showing file sizes over time
+┌─ SIZE EVOLUTION ────────────────────────────────────────────────────┐
+│                                                                      │
+│ 500│      ┌──────────────────────────────────────────────────────   │
+│    │   ┌──┤ src/app.rs                                               │
+│    │┌──┤  └────────────────────┐                                     │
+│ 300││  │ src/main.rs           └──────┐        ← something died      │
+│    ││  ├───────────────────────────────┴─────────                    │
+│    ││  │ src/ui.rs                               ← got split up      │
+│ 100│┤  ├─────────┬─────────┬─────────                                │
+│    ││  │ others  │ui_cards │ui_modals│                               │
+│   0│┴──┴─────────┴─────────┴─────────┴─────────────────────────────  │
+│    Jan 1        Jan 3        Jan 5        Jan 7        Jan 9         │
+│                                ▲                                     │
+│                           YOU ARE HERE                               │
+└──────────────────────────────────────────────────────────────────────┘
+ [hover] see file at that point   [click] jump to commit   [scroll] zoom
+You see:
+
+Files being born (stream appears)
+Files dying (stream ends)
+Files splitting (one becomes many)
+Total codebase growth/shrinkage
+
+
+[5] FOCUS VIEW - "Tell me everything about this file"
+Deep dive on one tracked file
+┌─ FOCUS: src/app.rs ─────────────────────────────────────────────────┐
+│ SPARKLINE    ▁▂▃▄▅▆▇█▇▆▅▄▃▂▁▁▁▁▂▃▄████▇▅▃▁  (size over 30 commits)  │
+├─────────────────────────────────────────────────────────────────────┤
+│ COMMITS TOUCHING THIS FILE                      │ MINIMAP            │
+│                                                 │ ┌────────────────┐ │
+│  ● 165afe6d  "Fix all 6 SlopChop vio..." (now) │ │████████████████│ │
+│  ● dfc8c1b1  "refactor(core): enforce..."      │ │████████████████│ │
+│  ● a3b2c1d0  "WIP broken everything"   ⚠️      │ │████████        │ │
+│  ● 98f7e6d5  "add new feature"                 │ │████████████████│ │
+│  ● 12345678  "initial commit"                  │ │████            │ │
+│                                                 │ └────────────────┘ │
+│  [↑↓] select   [Enter] preview   [R] restore   │   ▲ current         │
+├─────────────────────────────────────────────────┴────────────────────┤
+│ PREVIEW @ a3b2c1d0                                                   │
+│ ┌──────────────────────────────────────────────────────────────────┐ │
+│ │ // TODO: this is broken                                          │ │
+│ │ fn main() {                                                      │ │
+│ │     panic!("oops");                                              │ │
+│ └──────────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────────┘
+
+Navigation between views
+ [1] Treemap   [2] Heatmap   [3] Minimap   [4] River   [5] Focus
+      ◉            ○            ○            ○           ○
+Press 1-5 or Tab to cycle. Each view shares context:
+
+Selected file carries over
+Timeline position syncs across views
+Tracked files persist
+
+
+Does this hit the mark? Which views are must-haves vs nice-to-haves? Any I should kill or any missing metaphors?RetrySloooooove love love love love love you get me, you get me, i love YOU you are amazing holy fuck yes all of that is great. im wondering if maybe like, it could be useful to bring treesitter into this and like, dependancies/types surfaces etc like connections i dunno what do you think yay or nayThought process10sThe user is really vibing with these visual ideas and now they're asking about bringing in treesitter for structural/semantic analysis - dependencies, types, connections between code elements.
+This is a great idea conceptually but let me think about the tradeoffs:
+Pros of treesitter integration:
+
+Could show function-level changes, not just file-level
+Could visualize "this function calls that function which got deleted"
+Could show type dependencies ("this struct changed, here's everything that uses it")
+Could identify "blast radius" of a change
+Could show a call graph or dependency graph
+Could identify breaking changes (function signature changed)
+
+Cons:
+
+Significant complexity increase
+treesitter parsing for every commit would be slow
+Language-specific (would need grammars for each language)
+Might be scope creep - the user's core problem is "find when shit broke and restore it"
+Dependency graphs can get REALLY messy visually
+
+Middle ground:
+
+Maybe a 6th view that's like a "blast radius" or "impact" view
+Show function-level granularity only in Focus view
+Keep it optional/lazy-loaded
+
+But honestly... I should be real with them. This is getting into "amazing idea but massive scope" territory. The core tool solves: "when did this file get fucked, let me restore it." Adding semantic analysis is a whole other beast.
+Let me give them an honest take - yes it's cool, here's what it could look like, but also here's the complexity cost. Let them decide.
+Also they're clearly on a high from the creative collaboration so I should match that energy while still being grounded about scope.OKAY I love your enthusiasm and I'm here for this brainstorm BUT let me give you both the dream AND the reality check:
+
+The Dream: Semantic/Structural Views
+[6] BLAST RADIUS VIEW - "What broke when this changed?"
+treesitter-powered dependency visualization
+┌─ BLAST RADIUS: struct App (src/app.rs) ─────────────────────────────┐
+│                                                                      │
+│                        ┌─────────────┐                               │
+│                   ┌───▶│ ui::draw()  │                               │
+│                   │    └─────────────┘                               │
+│                   │    ┌─────────────┐                               │
+│  ┌────────────┐   ├───▶│ run_app()   │                               │
+│  │ struct App │───┤    └─────────────┘                               │
+│  │  CHANGED   │   │    ┌─────────────┐                               │
+│  │  ⚠️ -3 fields│   ├───▶│ App::new()  │──────▶ 14 call sites        │
+│  └────────────┘   │    └─────────────┘                               │
+│                   │    ┌─────────────┐                               │
+│                   └───▶│ load_detail │                               │
+│                        └─────────────┘                               │
+│                                                                      │
+│  😱 This change affected 23 functions across 8 files                 │
+└──────────────────────────────────────────────────────────────────────┘
+[7] FUNCTION GRAVEYARD - "What got deleted?"
+┌─ DELETED SINCE jan-03 ──────────────────────────────────────────────┐
+│                                                                      │
+│  💀 fn validate_user()     src/auth.rs:45      94 lines   [RESTORE] │
+│  💀 fn parse_config()      src/config.rs:12    23 lines   [RESTORE] │
+│  💀 struct OldThing        src/types.rs:88     12 lines   [RESTORE] │
+│  💀 impl Display for Foo   src/display.rs:1    45 lines   [RESTORE] │
+│                                                                      │
+│  Total: 4 items, 174 lines lost                                      │
+└──────────────────────────────────────────────────────────────────────┘
+[8] TYPE FLOW - "Show me the data shapes"
+┌─ TYPE EVOLUTION: User ──────────────────────────────────────────────┐
+│                                                                      │
+│  jan-01              jan-03              jan-05 (now)                │
+│  ┌──────────┐        ┌──────────┐        ┌──────────┐               │
+│  │ User     │        │ User     │        │ User     │               │
+│  │──────────│        │──────────│        │──────────│               │
+│  │ id: u32  │   →    │ id: u64  │   →    │ id: Uuid │  ⚠️ breaking  │
+│  │ name: Str│        │ name: Str│        │ name: Str│               │
+│  │          │        │ email:Str│        │ email:Str│               │
+│  └──────────┘        └──────────┘        │ role:Role│  + new field  │
+│                                          └──────────┘               │
+└──────────────────────────────────────────────────────────────────────┘
+
+The Reality Check
+ConsiderationImpacttreesitter = per-languageNeed separate grammar for Rust, TS, Python, etc.Parsing every commitSLOW unless you cache aggressivelyCross-file depsNeed to build a full AST graph - not trivialScope creepCore problem is "find & restore" - this is "understand & analyze"ComplexityGoes from "weekend project" to "3 month project"
+
+My Honest Take
+The 5 views I showed you earlier? Those are achievable with what you have now + some elbow grease. File-level granularity, visual patterns, mouse interaction - all doable.
+The treesitter stuff is amazing but it's a different tool. It's almost like:
+
+Views 1-5: "git-trek" - time travel & restore
+Views 6-8: "git-autopsy" - semantic code archaeology
+
+
+Suggestion: Build in Layers
+LAYER 1 (v3.0) - Ship this
+├── Treemap view
+├── Heatmap view
+├── Minimap view
+├── River view
+├── Focus view
+└── Full mouse support
+
+LAYER 2 (v4.0) - If you're still obsessed
+├── treesitter integration (Rust only first)
+├── Function-level tracking
+└── Blast radius for single file
+
+LAYER 3 (v5.0) - "Oh god why did I start this"
+├── Cross-file dependency graphs
+├── Multi-language support
+└── Type evolution tracking
+
+So: yay or nay?
+My vote: Yay conceptually, nay for v3.0 scope. Get the visual foundation rock solid first. The treesitter stuff can slot in later as an enhancement to Focus view.
+What do you think - does that layered approach work, or do you want to go full send on the semantic stuff now?
