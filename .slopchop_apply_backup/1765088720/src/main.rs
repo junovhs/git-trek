@@ -14,19 +14,12 @@ mod git_ops;
 mod mouse;
 mod views;
 
-use crate::{app::App, cli::Cli, mouse::hit_test, views::ViewMode};
+use crate::{app::App, cli::Cli, mouse::hit_test};
 
 fn main() -> Result<()> {
     let cli = Cli::parse_checked()?;
-
-    if cli.dry_run {
-        let _app = App::new(&cli).context("app init")?;
-        println!("App initialized and rendered successfully");
-        return Ok(());
-    }
-
     let mut terminal = setup_terminal().context("terminal setup")?;
-    let mut app = App::new(&cli).context("app init")?;
+    let mut app = App::new(cli).context("app init")?;
 
     let result = run_app(&mut terminal, &mut app);
 
@@ -57,37 +50,18 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut App)
     Ok(())
 }
 
-fn view_from_key(code: KeyCode) -> Option<ViewMode> {
-    match code {
-        KeyCode::Char('1') => Some(ViewMode::Treemap),
-        KeyCode::Char('2') => Some(ViewMode::Heatmap),
-        KeyCode::Char('3') => Some(ViewMode::Minimap),
-        KeyCode::Char('4') => Some(ViewMode::River),
-        KeyCode::Char('5') => Some(ViewMode::Focus),
-        _ => None,
-    }
-}
-
-fn handle_navigation(app: &mut App, code: KeyCode) -> bool {
-    match code {
-        KeyCode::Left => { app.scroll_timeline(1); true }
-        KeyCode::Right => { app.scroll_timeline(-1); true }
-        KeyCode::Tab => { app.next_view(); true }
-        KeyCode::BackTab => { app.prev_view(); true }
-        _ => false,
-    }
-}
-
 fn handle_key(app: &mut App, code: KeyCode) -> Result<()> {
-    if let Some(mode) = view_from_key(code) {
-        app.set_view(mode);
-        return Ok(());
-    }
-    if handle_navigation(app, code) {
-        return Ok(());
-    }
     match code {
         KeyCode::Char('q' | 'Q') => app.should_quit = true,
+        KeyCode::Char('1') => app.set_view(views::ViewMode::Treemap),
+        KeyCode::Char('2') => app.set_view(views::ViewMode::Heatmap),
+        KeyCode::Char('3') => app.set_view(views::ViewMode::Minimap),
+        KeyCode::Char('4') => app.set_view(views::ViewMode::River),
+        KeyCode::Char('5') => app.set_view(views::ViewMode::Focus),
+        KeyCode::Tab => app.next_view(),
+        KeyCode::BackTab => app.prev_view(),
+        KeyCode::Left => app.scroll_timeline(1),
+        KeyCode::Right => app.scroll_timeline(-1),
         KeyCode::Char('r' | 'R') => app.restore_selected()?,
         KeyCode::Esc => app.selected_file = None,
         _ => {}

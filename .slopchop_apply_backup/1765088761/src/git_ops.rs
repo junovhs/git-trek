@@ -52,7 +52,7 @@ fn process_tree_entry(
     let lines = content.iter().filter(|&&c| c == b'\n').count();
     files
         .entry(path)
-        .or_default()
+        .or_insert_with(TrackedFile::new)
         .history
         .insert(idx, FileSnapshot { lines });
 }

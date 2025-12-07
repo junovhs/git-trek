@@ -18,13 +18,6 @@ use crate::{app::App, cli::Cli, mouse::hit_test, views::ViewMode};
 
 fn main() -> Result<()> {
     let cli = Cli::parse_checked()?;
-
-    if cli.dry_run {
-        let _app = App::new(&cli).context("app init")?;
-        println!("App initialized and rendered successfully");
-        return Ok(());
-    }
-
     let mut terminal = setup_terminal().context("terminal setup")?;
     let mut app = App::new(&cli).context("app init")?;
 

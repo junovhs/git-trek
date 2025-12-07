@@ -6,12 +6,17 @@ pub struct HitBox {
     pub id: HitId,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum HitId {
     File(String),
+    Commit(usize),
+    TimelinePoint(usize),
     ViewTab(usize),
-    #[default]
     None,
+}
+
+impl Default for HitId {
+    fn default() -> Self { Self::None }
 }
 
 #[derive(Default)]
@@ -34,9 +39,11 @@ impl MouseState {
 
 pub fn hit_test(x: u16, y: u16, boxes: &[HitBox]) -> HitId {
     for hb in boxes {
-        let in_x = x >= hb.rect.x && x < hb.rect.x + hb.rect.width;
-        let in_y = y >= hb.rect.y && y < hb.rect.y + hb.rect.height;
-        if in_x && in_y {
+        if x >= hb.rect.x
+            && x < hb.rect.x + hb.rect.width
+            && y >= hb.rect.y
+            && y < hb.rect.y + hb.rect.height
+        {
             return hb.id.clone();
         }
     }

@@ -13,6 +13,7 @@ struct CliRaw {
 #[derive(Debug, Clone)]
 pub struct Cli {
     pub limit: usize,
+    #[allow(dead_code)]
     pub dry_run: bool,
 }
 

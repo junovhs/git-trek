@@ -1,5 +1,6 @@
 use anyhow::Result;
 use git2::Repository;
+use std::path::PathBuf;
 
 use crate::{
     cli::Cli,
@@ -11,6 +12,7 @@ use crate::{
 
 pub struct App {
     pub repo: Repository,
+    pub repo_dir: PathBuf,
     pub data: RepoData,
     pub view: ViewMode,
     pub commit_idx: usize,
@@ -21,12 +23,14 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(cli: &Cli) -> Result<Self> {
+    pub fn new(cli: Cli) -> Result<Self> {
         let repo = Repository::open_from_env()?;
+        let repo_dir = std::env::current_dir()?;
         let data = git_ops::load_repo_data(&repo, cli.limit)?;
 
         Ok(Self {
             repo,
+            repo_dir,
             data,
             view: ViewMode::default(),
             commit_idx: 0,
@@ -39,7 +43,8 @@ impl App {
 
     pub fn current_commit_label(&self) -> String {
         self.data.commits.get(self.commit_idx)
-            .map_or_else(|| "---".to_string(), |c| git_ops::format_oid(c.oid))
+            .map(|c| git_ops::format_oid(c.oid))
+            .unwrap_or_else(|| "---".to_string())
     }
 
     pub fn files_at_current_commit(&self) -> Vec<(String, usize)> {
@@ -55,28 +60,27 @@ impl App {
     pub fn file_health(&self, path: &str) -> HealthStatus {
         let prev_idx = if self.commit_idx + 1 < self.data.commits.len() {
             Some(self.commit_idx + 1)
-        } else {
-            None
-        };
+        } else { None };
         self.data.files.get(path)
-            .map_or(HealthStatus::Stable, |f| f.health_at(self.commit_idx, prev_idx))
+            .map(|f| f.health_at(self.commit_idx, prev_idx))
+            .unwrap_or(HealthStatus::Stable)
     }
 
     pub fn handle_click(&mut self, id: HitId) {
         match id {
             HitId::File(path) => { self.selected_file = Some(path); }
             HitId::ViewTab(i) => { self.view = ViewMode::from_index(i); }
+            HitId::Commit(i) | HitId::TimelinePoint(i) => { self.commit_idx = i; }
             HitId::None => {}
         }
     }
 
     pub fn scroll_timeline(&mut self, delta: isize) {
         let max = self.data.commits.len().saturating_sub(1);
-        let abs_delta = delta.unsigned_abs();
         let new_idx = if delta > 0 {
-            self.commit_idx.saturating_add(abs_delta)
+            self.commit_idx.saturating_add(delta as usize)
         } else {
-            self.commit_idx.saturating_sub(abs_delta)
+            self.commit_idx.saturating_sub(delta.unsigned_abs())
         };
         self.commit_idx = new_idx.min(max);
     }
@@ -89,7 +93,7 @@ impl App {
         let Some(path) = &self.selected_file else { return Ok(()); };
         let oid = self.data.commits[self.commit_idx].oid;
         git_ops::restore_file(&self.repo, oid, path)?;
-        self.message = Some(format!("Restored {path} from {}", git_ops::format_oid(oid)));
+        self.message = Some(format!("Restored {} from {}", path, git_ops::format_oid(oid)));
         Ok(())
     }
 }

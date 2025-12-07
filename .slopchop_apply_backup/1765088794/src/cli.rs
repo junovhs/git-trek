@@ -6,14 +6,11 @@ use clap::Parser;
 struct CliRaw {
     #[arg(long, default_value_t = 200)]
     pub limit: usize,
-    #[arg(long, hide = true)]
-    pub dry_run: bool,
 }
 
 #[derive(Debug, Clone)]
 pub struct Cli {
     pub limit: usize,
-    pub dry_run: bool,
 }
 
 impl Cli {
@@ -22,9 +19,6 @@ impl Cli {
         if raw.limit == 0 {
             return Err(anyhow!("--limit must be > 0"));
         }
-        Ok(Self {
-            limit: raw.limit,
-            dry_run: raw.dry_run,
-        })
+        Ok(Self { limit: raw.limit })
     }
 }

@@ -85,8 +85,7 @@ fn draw_timeline(f: &mut Frame, area: Rect, app: &App) {
 }
 
 fn draw_treemap_area(f: &mut Frame, area: Rect, app: &App, result: &mut RenderResult) {
-    let title = format!(" Files @ {} ", app.current_commit_label());
-    let block = Block::default().borders(Borders::ALL).title(title);
+    let block = Block::default().borders(Borders::ALL).title(format!(" Files @ {} ", app.current_commit_label()));
     let inner = block.inner(area);
     f.render_widget(block, area);
 
@@ -98,9 +97,9 @@ fn draw_treemap_area(f: &mut Frame, area: Rect, app: &App, result: &mut RenderRe
         let health = app.file_health(path);
         let is_hover = app.mouse.hover == HitId::File(path.clone());
         let is_selected = app.selected_file.as_ref() == Some(path);
-        let bg = select_cell_color(is_selected, is_hover, health);
+        let bg = if is_selected { CLR_SELECTED } else if is_hover { CLR_HOVER } else { health_color(health) };
         let name = truncate_path(path, rect.width as usize);
-        let content = Paragraph::new(vec![Line::from(name), Line::from(format!("{lines} ln"))])
+        let content = Paragraph::new(vec![Line::from(name), Line::from(format!("{} ln", lines))])
             .style(Style::default().bg(bg).fg(Color::Black))
             .block(Block::default().borders(Borders::ALL));
         f.render_widget(content, *rect);
@@ -108,15 +107,9 @@ fn draw_treemap_area(f: &mut Frame, area: Rect, app: &App, result: &mut RenderRe
     }
 }
 
-fn select_cell_color(is_selected: bool, is_hover: bool, health: HealthStatus) -> Color {
-    if is_selected { CLR_SELECTED }
-    else if is_hover { CLR_HOVER }
-    else { health_color(health) }
-}
-
 fn draw_status(f: &mut Frame, area: Rect, app: &App) {
     let status = match &app.selected_file {
-        Some(path) => format!("Selected: {path} | [R]estore [Q]uit"),
+        Some(path) => format!("Selected: {} | [R]estore [Q]uit", path),
         None => "[click] select | [scroll] time travel | [1-5] views | [Q]uit".to_string(),
     };
     f.render_widget(Paragraph::new(status).style(Style::default().fg(Color::DarkGray)), area);
@@ -124,58 +117,45 @@ fn draw_status(f: &mut Frame, area: Rect, app: &App) {
 
 fn health_color(status: HealthStatus) -> Color {
     match status {
-        HealthStatus::Stable | HealthStatus::Deleted => CLR_STABLE,
+        HealthStatus::Stable => CLR_STABLE,
         HealthStatus::Grew => CLR_GREW,
         HealthStatus::Shrank => CLR_SHRANK,
         HealthStatus::MaybeFucked => CLR_FUCKED,
         HealthStatus::New => CLR_NEW,
+        HealthStatus::Deleted => CLR_STABLE,
     }
 }
 
 fn truncate_path(path: &str, max: usize) -> String {
     if path.len() <= max { return path.to_string(); }
-    let name = path.rsplit('/').next().unwrap_or(path);
-    let limit = max.saturating_sub(2);
-    let truncated: String = name.chars().take(limit).collect();
-    format!("{truncated}..")
+    path.rsplit('/').next().unwrap_or(path).chars().take(max.saturating_sub(2)).collect::<String>() + ".."
 }
 
 fn compute_treemap_layout(files: &[(String, usize)], area: Rect) -> Vec<(String, usize, Rect)> {
-    #[allow(clippy::cast_precision_loss)]
-    let total: f64 = files.iter().map(|(_, s)| *s as f64).sum();
-    if total == 0.0 || area.width < 2 || area.height < 2 {
-        return vec![];
-    }
+    let total: usize = files.iter().map(|(_, s)| s).sum();
+    if total == 0 || area.width < 2 || area.height < 2 { return vec![]; }
 
     let mut result = Vec::new();
     let mut remaining = area;
 
     for (path, lines) in files.iter().take(20) {
         if remaining.width < 3 || remaining.height < 2 { break; }
-        #[allow(clippy::cast_precision_loss)]
-        let ratio = (*lines as f64) / total;
-        let rect = allocate_cell(&mut remaining, ratio);
+        let ratio = (*lines as f64) / (total as f64);
+        let horizontal = remaining.width >= remaining.height;
+        let rect = if horizontal {
+            let w = ((remaining.width as f64) * ratio).max(4.0).min(remaining.width as f64) as u16;
+            let r = Rect::new(remaining.x, remaining.y, w, remaining.height);
+            remaining.x += w;
+            remaining.width = remaining.width.saturating_sub(w);
+            r
+        } else {
+            let h = ((remaining.height as f64) * ratio).max(3.0).min(remaining.height as f64) as u16;
+            let r = Rect::new(remaining.x, remaining.y, remaining.width, h);
+            remaining.y += h;
+            remaining.height = remaining.height.saturating_sub(h);
+            r
+        };
         result.push((path.clone(), *lines, rect));
     }
     result
-}
-
-#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-fn allocate_cell(remaining: &mut Rect, ratio: f64) -> Rect {
-    let horizontal = remaining.width >= remaining.height;
-    if horizontal {
-        let w_f = f64::from(remaining.width) * ratio;
-        let w = w_f.max(4.0).min(f64::from(remaining.width)) as u16;
-        let r = Rect::new(remaining.x, remaining.y, w, remaining.height);
-        remaining.x += w;
-        remaining.width = remaining.width.saturating_sub(w);
-        r
-    } else {
-        let h_f = f64::from(remaining.height) * ratio;
-        let h = h_f.max(3.0).min(f64::from(remaining.height)) as u16;
-        let r = Rect::new(remaining.x, remaining.y, remaining.width, h);
-        remaining.y += h;
-        remaining.height = remaining.height.saturating_sub(h);
-        r
-    }
 }

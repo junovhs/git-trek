@@ -11,30 +11,20 @@ pub enum HealthStatus {
     Deleted,
 }
 
-fn ratio_to_health(old: usize, new: usize) -> HealthStatus {
-    if old == 0 {
-        return HealthStatus::New;
-    }
-    #[allow(clippy::cast_precision_loss)]
-    let ratio = new as f64 / old as f64;
-    if ratio < 0.7 {
-        HealthStatus::MaybeFucked
-    } else if ratio < 0.95 {
-        HealthStatus::Shrank
-    } else if ratio > 1.05 {
-        HealthStatus::Grew
-    } else {
-        HealthStatus::Stable
-    }
-}
-
 impl HealthStatus {
     pub fn from_size_change(old: Option<usize>, new: Option<usize>) -> Self {
         match (old, new) {
             (None, None) => Self::Stable,
             (None, Some(_)) => Self::New,
             (Some(_), None) => Self::Deleted,
-            (Some(o), Some(n)) => ratio_to_health(o, n),
+            (Some(o), Some(n)) => {
+                if o == 0 { return Self::New; }
+                let ratio = n as f64 / o as f64;
+                if ratio < 0.7 { Self::MaybeFucked }
+                else if ratio < 0.95 { Self::Shrank }
+                else if ratio > 1.05 { Self::Grew }
+                else { Self::Stable }
+            }
         }
     }
 }
@@ -42,16 +32,18 @@ impl HealthStatus {
 #[derive(Clone, Debug)]
 pub struct FileSnapshot {
     pub lines: usize,
+    pub bytes: usize,
 }
 
 #[derive(Clone, Debug)]
 pub struct TrackedFile {
+    pub path: String,
     pub history: HashMap<usize, FileSnapshot>,
 }
 
 impl TrackedFile {
-    pub fn new() -> Self {
-        Self { history: HashMap::new() }
+    pub fn new(path: String) -> Self {
+        Self { path, history: HashMap::new() }
     }
 
     pub fn lines_at(&self, commit_idx: usize) -> Option<usize> {
@@ -65,15 +57,15 @@ impl TrackedFile {
     }
 }
 
-impl Default for TrackedFile {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct CommitInfo {
     pub oid: Oid,
+    pub summary: String,
+    pub author: String,
+    pub timestamp: i64,
+    pub files_changed: Vec<String>,
+    pub insertions: usize,
+    pub deletions: usize,
 }
 
 #[derive(Clone, Default)]
@@ -83,7 +75,5 @@ pub struct RepoData {
 }
 
 impl RepoData {
-    pub fn new() -> Self {
-        Self::default()
-    }
+    pub fn new() -> Self { Self::default() }
 }
