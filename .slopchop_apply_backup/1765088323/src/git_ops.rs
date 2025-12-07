@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use git2::{Oid, Repository, Sort};
+use std::collections::HashMap;
 
 use crate::data::{CommitInfo, FileSnapshot, RepoData, TrackedFile};
 

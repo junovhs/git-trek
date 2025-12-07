@@ -1,8 +1,4 @@
-Fix all 6 SlopChop violations + 1 Clippy error across the codebase.
+Fix main.rs to only declare new modules, remove old module references
 
 CHANGES:
-1. **src/cli.rs**: Replace 4 bools with `CliFlags` bitflags struct to fix `clippy::struct_excessive_bools`
-2. **src/shell.rs**: Extract timeout loop to separate function to fix deep nesting (depth 4→2)
-3. **src/main.rs**: Extract key handler logic to flatten nesting; split complex match arms
-4. **src/app.rs**: Split into `app.rs` + `git_ops.rs` to fix atomicity (3444→~1400 tokens each)
-5. **src/ui.rs**: Split into `ui.rs` + `ui_cards.rs` + `ui_modals.rs` to fix atomicity (5191→~1700 each)
+1. src/main.rs: Remove old module declarations (app_detail, shell, ui, ui_cards, ui_modals)
