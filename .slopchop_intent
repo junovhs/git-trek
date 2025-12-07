@@ -1,0 +1,5 @@
+Add unit tests for data model and input handling
+CHANGES:
+1. Create src/lib.rs to expose modules for testing
+2. Create tests/data_tests.rs for HealthStatus and TrackedFile
+3. Create tests/input_tests.rs for hit_test and ViewMode

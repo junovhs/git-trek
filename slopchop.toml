@@ -5,14 +5,15 @@ max_nesting_depth = 3
 max_function_args = 5
 max_function_words = 5
 ignore_naming_on = [
-    "tests",
-    "spec",
+"tests",
+"spec",
 ]
 ignore_tokens_on = [
-    "README.md",
-    "lock",
+"README.md",
+"ROADMAP.md",
+"tasks.toml",
+"lock",
 ]
-
 [preferences]
 theme = "Cyberpunk"
 auto_copy = true
@@ -24,10 +25,9 @@ system_bell = false
 backup_retention = 5
 progress_bars = true
 require_plan = false
-
 [commands]
 check = [
-    "cargo clippy --all-targets -- -D warnings -W clippy::pedantic",
-    "cargo test",
+"cargo clippy --all-targets -- -D warnings -W clippy::pedantic",
+"cargo test",
 ]
 fix = ["cargo fmt"]

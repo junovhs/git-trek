@@ -2,9 +2,6 @@
 title = "git-trek Roadmap"
 description = "Visual git time travel & file recovery"
 
-# ============================================
-# SECTIONS
-# ============================================
 [[sections]]
 id = "core"
 title = "Core Infrastructure"
@@ -65,14 +62,12 @@ title = "Polish & QoL"
 status = "pending"
 order = 9
 
-# ============================================
-# CORE INFRASTRUCTURE (src/main.rs, src/app.rs)
-# ============================================
 [[tasks]]
 id = "core-main-entry"
 text = "main() entry point with error handling"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 0
 
 [[tasks]]
@@ -80,6 +75,7 @@ id = "core-terminal-setup"
 text = "setup_terminal() raw mode + mouse capture"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 1
 
 [[tasks]]
@@ -87,6 +83,7 @@ id = "core-terminal-restore"
 text = "restore_terminal() cleanup on exit"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 2
 
 [[tasks]]
@@ -94,6 +91,7 @@ id = "core-event-loop"
 text = "run_app() main event loop with 50ms poll"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 3
 
 [[tasks]]
@@ -101,6 +99,7 @@ id = "core-app-struct"
 text = "App struct (repo, data, view, commit_idx, selected_file, mouse, should_quit, message)"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 4
 
 [[tasks]]
@@ -108,6 +107,7 @@ id = "core-app-new"
 text = "App::new() initialize from CLI args"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 5
 
 [[tasks]]
@@ -115,6 +115,7 @@ id = "core-cli-struct"
 text = "Cli struct (limit, dry_run)"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 6
 
 [[tasks]]
@@ -122,6 +123,7 @@ id = "core-cli-parse"
 text = "Cli::parse_checked() with validation"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 7
 
 [[tasks]]
@@ -129,6 +131,7 @@ id = "core-cli-limit"
 text = "--limit flag for commit count"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 8
 
 [[tasks]]
@@ -136,6 +139,7 @@ id = "core-cli-dry-run"
 text = "--dry-run flag for testing"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 9
 
 [[tasks]]
@@ -143,16 +147,15 @@ id = "core-message-display"
 text = "Post-exit message display"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 10
 
-# ============================================
-# DATA MODEL (src/data.rs)
-# ============================================
 [[tasks]]
 id = "data-health-enum"
 text = "HealthStatus enum (Stable, Grew, Shrank, MaybeFucked, New, Deleted)"
 status = "done"
 section = "data"
+test = "[no-test]"
 order = 0
 
 [[tasks]]
@@ -160,6 +163,7 @@ id = "data-health-from-change"
 text = "HealthStatus::from_size_change() old/new comparison"
 status = "done"
 section = "data"
+test = "tests/data_tests.rs::test_health_none_to_some_is_new"
 order = 1
 
 [[tasks]]
@@ -167,6 +171,7 @@ id = "data-health-from-ratio"
 text = "HealthStatus::from_ratio() with 0.7/0.95/1.05 thresholds"
 status = "done"
 section = "data"
+test = "tests/data_tests.rs::test_health_ratio_under_70_is_fucked"
 order = 2
 
 [[tasks]]
@@ -174,6 +179,7 @@ id = "data-file-snapshot"
 text = "FileSnapshot struct (lines, bytes)"
 status = "done"
 section = "data"
+test = "[no-test]"
 order = 3
 
 [[tasks]]
@@ -181,6 +187,7 @@ id = "data-tracked-file"
 text = "TrackedFile struct (path, history HashMap)"
 status = "done"
 section = "data"
+test = "[no-test]"
 order = 4
 
 [[tasks]]
@@ -188,6 +195,7 @@ id = "data-tracked-new"
 text = "TrackedFile::new()"
 status = "done"
 section = "data"
+test = "[no-test]"
 order = 5
 
 [[tasks]]
@@ -195,6 +203,7 @@ id = "data-tracked-lines-at"
 text = "TrackedFile::lines_at() get lines at commit index"
 status = "done"
 section = "data"
+test = "tests/data_tests.rs::test_tracked_file_lines_at_present"
 order = 6
 
 [[tasks]]
@@ -202,6 +211,7 @@ id = "data-tracked-health-at"
 text = "TrackedFile::health_at() compare to previous commit"
 status = "done"
 section = "data"
+test = "tests/data_tests.rs::test_tracked_file_health_at_shrink"
 order = 7
 
 [[tasks]]
@@ -209,6 +219,7 @@ id = "data-commit-info"
 text = "CommitInfo struct (oid, summary, author, timestamp, files_changed, insertions, deletions)"
 status = "done"
 section = "data"
+test = "[no-test]"
 order = 8
 
 [[tasks]]
@@ -216,6 +227,7 @@ id = "data-repo-data"
 text = "RepoData struct (commits Vec, files HashMap)"
 status = "done"
 section = "data"
+test = "[no-test]"
 order = 9
 
 [[tasks]]
@@ -223,16 +235,15 @@ id = "data-repo-new"
 text = "RepoData::new()"
 status = "done"
 section = "data"
+test = "[no-test]"
 order = 10
 
-# ============================================
-# GIT INTEGRATION (src/git_ops.rs)
-# ============================================
 [[tasks]]
 id = "git-load-repo"
 text = "load_repo_data() main loader function"
 status = "done"
 section = "git"
+test = "[no-test]"
 order = 0
 
 [[tasks]]
@@ -240,6 +251,7 @@ id = "git-collect-oids"
 text = "collect_commit_oids() revwalk with TOPOLOGICAL|TIME sort"
 status = "done"
 section = "git"
+test = "[no-test]"
 order = 1
 
 [[tasks]]
@@ -247,6 +259,7 @@ id = "git-build-commit"
 text = "build_commit_info() extract commit metadata"
 status = "done"
 section = "git"
+test = "[no-test]"
 order = 2
 
 [[tasks]]
@@ -254,6 +267,7 @@ id = "git-diff-stats"
 text = "get_diff_stats() insertions/deletions count"
 status = "done"
 section = "git"
+test = "[no-test]"
 order = 3
 
 [[tasks]]
@@ -261,6 +275,7 @@ id = "git-collect-snapshots"
 text = "collect_file_snapshots() tree walk for files"
 status = "done"
 section = "git"
+test = "[no-test]"
 order = 4
 
 [[tasks]]
@@ -268,6 +283,7 @@ id = "git-process-blob"
 text = "process_blob_entry() count newlines in blob"
 status = "done"
 section = "git"
+test = "[no-test]"
 order = 5
 
 [[tasks]]
@@ -275,6 +291,7 @@ id = "git-format-oid"
 text = "format_oid() 8-char hash display"
 status = "done"
 section = "git"
+test = "[no-test]"
 order = 6
 
 [[tasks]]
@@ -282,6 +299,7 @@ id = "git-get-content"
 text = "get_file_content() retrieve file at commit"
 status = "done"
 section = "git"
+test = "[no-test]"
 order = 7
 
 [[tasks]]
@@ -289,16 +307,15 @@ id = "git-restore-file"
 text = "restore_file() write file to disk"
 status = "done"
 section = "git"
+test = "[no-test]"
 order = 8
 
-# ============================================
-# INPUT HANDLING (src/main.rs, src/mouse.rs)
-# ============================================
 [[tasks]]
 id = "input-hitbox-struct"
 text = "HitBox struct (rect, id)"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 0
 
 [[tasks]]
@@ -306,6 +323,7 @@ id = "input-hitid-enum"
 text = "HitId enum (File, ViewTab, None)"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 1
 
 [[tasks]]
@@ -313,6 +331,7 @@ id = "input-mouse-state"
 text = "MouseState struct (x, y, hover)"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 2
 
 [[tasks]]
@@ -320,6 +339,7 @@ id = "input-mouse-update-pos"
 text = "MouseState::update_position()"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 3
 
 [[tasks]]
@@ -327,6 +347,7 @@ id = "input-mouse-set-hover"
 text = "MouseState::set_hover()"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 4
 
 [[tasks]]
@@ -334,6 +355,7 @@ id = "input-hit-test"
 text = "hit_test() find element under cursor"
 status = "done"
 section = "input"
+test = "tests/input_tests.rs::test_hit_test_hit_returns_id"
 order = 5
 
 [[tasks]]
@@ -341,6 +363,7 @@ id = "input-handle-mouse"
 text = "handle_mouse() dispatch Moved/Down/Scroll"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 6
 
 [[tasks]]
@@ -348,6 +371,7 @@ id = "input-handle-key"
 text = "handle_key() keyboard dispatch"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 7
 
 [[tasks]]
@@ -355,6 +379,7 @@ id = "input-view-from-key"
 text = "view_from_key() map 1-5 to ViewMode"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 8
 
 [[tasks]]
@@ -362,6 +387,7 @@ id = "input-handle-nav"
 text = "handle_navigation() arrows/tab"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 9
 
 [[tasks]]
@@ -369,6 +395,7 @@ id = "input-key-q-quit"
 text = "Q key quits app"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 10
 
 [[tasks]]
@@ -376,6 +403,7 @@ id = "input-key-r-restore"
 text = "R key restores selected file"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 11
 
 [[tasks]]
@@ -383,6 +411,7 @@ id = "input-key-esc-deselect"
 text = "Esc key deselects file"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 12
 
 [[tasks]]
@@ -390,6 +419,7 @@ id = "input-key-arrows"
 text = "Left/Right arrows navigate timeline"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 13
 
 [[tasks]]
@@ -397,6 +427,7 @@ id = "input-key-tab"
 text = "Tab/BackTab cycles views"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 14
 
 [[tasks]]
@@ -404,6 +435,7 @@ id = "input-scroll-up"
 text = "ScrollUp moves timeline backward"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 15
 
 [[tasks]]
@@ -411,6 +443,7 @@ id = "input-scroll-down"
 text = "ScrollDown moves timeline forward"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 16
 
 [[tasks]]
@@ -418,6 +451,7 @@ id = "input-click-file"
 text = "Click file to select"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 17
 
 [[tasks]]
@@ -425,6 +459,7 @@ id = "input-click-tab"
 text = "Click tab to switch view"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 18
 
 [[tasks]]
@@ -432,16 +467,15 @@ id = "input-hover-highlight"
 text = "Hover highlights element"
 status = "done"
 section = "input"
+test = "[no-test]"
 order = 19
 
-# ============================================
-# APP STATE (src/app.rs)
-# ============================================
 [[tasks]]
 id = "app-current-commit-label"
 text = "App::current_commit_label() format hash"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 11
 
 [[tasks]]
@@ -449,6 +483,7 @@ id = "app-files-at-commit"
 text = "App::files_at_current_commit() sorted by size"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 12
 
 [[tasks]]
@@ -456,6 +491,7 @@ id = "app-file-health"
 text = "App::file_health() get status for path"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 13
 
 [[tasks]]
@@ -463,6 +499,7 @@ id = "app-handle-click"
 text = "App::handle_click() dispatch File/ViewTab"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 14
 
 [[tasks]]
@@ -470,6 +507,7 @@ id = "app-scroll-timeline"
 text = "App::scroll_timeline() with bounds checking"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 15
 
 [[tasks]]
@@ -477,6 +515,7 @@ id = "app-set-view"
 text = "App::set_view()"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 16
 
 [[tasks]]
@@ -484,6 +523,7 @@ id = "app-next-view"
 text = "App::next_view()"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 17
 
 [[tasks]]
@@ -491,6 +531,7 @@ id = "app-prev-view"
 text = "App::prev_view()"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 18
 
 [[tasks]]
@@ -498,16 +539,15 @@ id = "app-restore-selected"
 text = "App::restore_selected() restore with message"
 status = "done"
 section = "core"
+test = "[no-test]"
 order = 19
 
-# ============================================
-# VIEW SYSTEM (src/views/mod.rs)
-# ============================================
 [[tasks]]
 id = "view-mode-enum"
 text = "ViewMode enum (Treemap, Heatmap, Minimap, River, Focus)"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 0
 
 [[tasks]]
@@ -515,6 +555,7 @@ id = "view-mode-all"
 text = "ViewMode::ALL const array"
 status = "done"
 section = "treemap"
+test = "tests/input_tests.rs::test_viewmode_all_array"
 order = 1
 
 [[tasks]]
@@ -522,6 +563,7 @@ id = "view-mode-name"
 text = "ViewMode::name() display string"
 status = "done"
 section = "treemap"
+test = "tests/input_tests.rs::test_viewmode_name"
 order = 2
 
 [[tasks]]
@@ -529,6 +571,7 @@ id = "view-mode-index"
 text = "ViewMode::index() numeric index"
 status = "done"
 section = "treemap"
+test = "tests/input_tests.rs::test_viewmode_index"
 order = 3
 
 [[tasks]]
@@ -536,6 +579,7 @@ id = "view-mode-from-index"
 text = "ViewMode::from_index() with default fallback"
 status = "done"
 section = "treemap"
+test = "tests/input_tests.rs::test_viewmode_from_index_valid"
 order = 4
 
 [[tasks]]
@@ -543,6 +587,7 @@ id = "view-mode-next"
 text = "ViewMode::next() cycle forward"
 status = "done"
 section = "treemap"
+test = "tests/input_tests.rs::test_viewmode_next_cycles"
 order = 5
 
 [[tasks]]
@@ -550,6 +595,7 @@ id = "view-mode-prev"
 text = "ViewMode::prev() cycle backward"
 status = "done"
 section = "treemap"
+test = "tests/input_tests.rs::test_viewmode_prev_cycles"
 order = 6
 
 [[tasks]]
@@ -557,6 +603,7 @@ id = "view-render-result"
 text = "RenderResult struct (hit_boxes Vec)"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 7
 
 [[tasks]]
@@ -564,16 +611,15 @@ id = "view-draw-dispatch"
 text = "draw() dispatch to current view"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 8
 
-# ============================================
-# TREEMAP VIEW (src/views/treemap.rs)
-# ============================================
 [[tasks]]
 id = "treemap-color-stable"
 text = "CLR_STABLE constant (60,60,60 gray)"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 10
 
 [[tasks]]
@@ -581,6 +627,7 @@ id = "treemap-color-grew"
 text = "CLR_GREW constant (80,200,120 green)"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 11
 
 [[tasks]]
@@ -588,6 +635,7 @@ id = "treemap-color-shrank"
 text = "CLR_SHRANK constant (200,200,80 yellow)"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 12
 
 [[tasks]]
@@ -595,6 +643,7 @@ id = "treemap-color-fucked"
 text = "CLR_FUCKED constant (255,80,80 red)"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 13
 
 [[tasks]]
@@ -602,6 +651,7 @@ id = "treemap-color-new"
 text = "CLR_NEW constant (80,180,255 blue)"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 14
 
 [[tasks]]
@@ -609,6 +659,7 @@ id = "treemap-color-hover"
 text = "CLR_HOVER constant (255,0,255 magenta)"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 15
 
 [[tasks]]
@@ -616,6 +667,7 @@ id = "treemap-color-selected"
 text = "CLR_SELECTED constant (0,255,255 cyan)"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 16
 
 [[tasks]]
@@ -623,6 +675,7 @@ id = "treemap-draw-main"
 text = "draw() main treemap render with 4-chunk layout"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 17
 
 [[tasks]]
@@ -630,6 +683,7 @@ id = "treemap-draw-header"
 text = "draw_header() title + view tabs"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 18
 
 [[tasks]]
@@ -637,6 +691,7 @@ id = "treemap-draw-timeline"
 text = "draw_timeline() slider with position marker"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 19
 
 [[tasks]]
@@ -644,6 +699,7 @@ id = "treemap-draw-area"
 text = "draw_treemap_area() file rectangles"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 20
 
 [[tasks]]
@@ -651,6 +707,7 @@ id = "treemap-draw-status"
 text = "draw_status() bottom hints bar"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 21
 
 [[tasks]]
@@ -658,6 +715,7 @@ id = "treemap-health-color"
 text = "health_color() map HealthStatus to Color"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 22
 
 [[tasks]]
@@ -665,6 +723,7 @@ id = "treemap-truncate-path"
 text = "truncate_path() shorten filename for display"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 23
 
 [[tasks]]
@@ -672,6 +731,7 @@ id = "treemap-compute-layout"
 text = "compute_treemap_layout() sequential strip algorithm"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 24
 
 [[tasks]]
@@ -679,6 +739,7 @@ id = "treemap-file-label"
 text = "File rectangle shows truncated name"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 25
 
 [[tasks]]
@@ -686,6 +747,7 @@ id = "treemap-file-linecount"
 text = "File rectangle shows line count"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 26
 
 [[tasks]]
@@ -693,6 +755,7 @@ id = "treemap-hitbox-files"
 text = "Hit boxes registered for files"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 27
 
 [[tasks]]
@@ -700,6 +763,7 @@ id = "treemap-hitbox-tabs"
 text = "Hit boxes registered for view tabs"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 28
 
 [[tasks]]
@@ -707,6 +771,7 @@ id = "treemap-tab-active"
 text = "Active tab highlighted (black on cyan)"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 29
 
 [[tasks]]
@@ -714,6 +779,7 @@ id = "treemap-tab-hover"
 text = "Tab hover highlight (cyan text)"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 30
 
 [[tasks]]
@@ -721,6 +787,7 @@ id = "treemap-timeline-marker"
 text = "Timeline shows ◉ at current position"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 31
 
 [[tasks]]
@@ -728,6 +795,7 @@ id = "treemap-timeline-n-of-total"
 text = "Timeline shows N / total"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 32
 
 [[tasks]]
@@ -735,6 +803,7 @@ id = "treemap-timeline-summary"
 text = "Timeline shows commit summary (40 chars)"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 33
 
 [[tasks]]
@@ -742,6 +811,7 @@ id = "treemap-commit-hash"
 text = "Files panel shows commit hash"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 34
 
 [[tasks]]
@@ -749,11 +819,9 @@ id = "treemap-max-20-files"
 text = "Treemap limited to 20 files"
 status = "done"
 section = "treemap"
+test = "[no-test]"
 order = 35
 
-# ============================================
-# TREEMAP IMPROVEMENTS (TODO)
-# ============================================
 [[tasks]]
 id = "treemap-squarify"
 text = "Squarified layout algorithm (better aspect ratios)"
@@ -796,9 +864,6 @@ status = "pending"
 section = "treemap"
 order = 45
 
-# ============================================
-# HEATMAP VIEW (TODO)
-# ============================================
 [[tasks]]
 id = "heatmap-grid-layout"
 text = "Time (x) vs File (y) grid layout"
@@ -869,9 +934,6 @@ status = "pending"
 section = "heatmap"
 order = 9
 
-# ============================================
-# MINIMAP VIEW (TODO)
-# ============================================
 [[tasks]]
 id = "minimap-three-panel"
 text = "Three panel layout (before/after/diff)"
@@ -942,9 +1004,6 @@ status = "pending"
 section = "minimap"
 order = 9
 
-# ============================================
-# RIVER VIEW (TODO)
-# ============================================
 [[tasks]]
 id = "river-stacked-stream"
 text = "Stacked stream chart layout"
@@ -1022,9 +1081,6 @@ status = "pending"
 section = "river"
 order = 10
 
-# ============================================
-# FOCUS VIEW (TODO)
-# ============================================
 [[tasks]]
 id = "focus-single-file"
 text = "Deep dive on selected file"
@@ -1088,9 +1144,6 @@ status = "pending"
 section = "focus"
 order = 8
 
-# ============================================
-# POLISH & QOL (TODO)
-# ============================================
 [[tasks]]
 id = "polish-filter-path"
 text = "Filter files by path pattern"
