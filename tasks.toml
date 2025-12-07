@@ -17,35 +17,35 @@ order = 1
 [[tasks]]
 id = "treemap-core"
 text = "Core treemap view with health coloring"
-status = "pending"
+status = "done"
 section = "v0.1.0"
 order = 0
 
 [[tasks]]
 id = "mouse-interaction"
 text = "Mouse hover/click/scroll navigation"
-status = "pending"
+status = "done"
 section = "v0.1.0"
 order = 0
 
 [[tasks]]
 id = "file-restore"
 text = "Restore file from any commit with R key"
-status = "pending"
+status = "done"
 section = "v0.1.0"
 order = 0
 
 [[tasks]]
 id = "view-tabs"
 text = "View mode tabs (1-5 switching)"
-status = "pending"
+status = "done"
 section = "v0.1.0"
 order = 0
 
 [[tasks]]
 id = "timeline-scrub"
 text = "Timeline slider with commit info"
-status = "pending"
+status = "done"
 section = "v0.1.0"
 order = 0
 
