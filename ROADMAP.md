@@ -6,121 +6,121 @@ Visual git time travel & file recovery
 
 ## Core Infrastructure ?? CURRENT
 
-- [x] **main() entry point with error handling**
-- [x] **setup_terminal() raw mode + mouse capture**
-- [x] **restore_terminal() cleanup on exit**
-- [x] **run_app() main event loop with 50ms poll**
-- [x] **App struct (repo, data, view, commit_idx, selected_file, mouse, should_quit, message)**
-- [x] **App::new() initialize from CLI args**
-- [x] **Cli struct (limit, dry_run)**
-- [x] **Cli::parse_checked() with validation**
-- [x] **--limit flag for commit count**
-- [x] **--dry-run flag for testing**
-- [x] **Post-exit message display**
-- [x] **App::current_commit_label() format hash**
-- [x] **App::files_at_current_commit() sorted by size**
-- [x] **App::file_health() get status for path**
-- [x] **App::handle_click() dispatch File/ViewTab**
-- [x] **App::scroll_timeline() with bounds checking**
-- [x] **App::set_view()**
-- [x] **App::next_view()**
-- [x] **App::prev_view()**
-- [x] **App::restore_selected() restore with message**
+- [x] **main() entry point with error handling** <!-- test: [no-test] -->
+- [x] **setup_terminal() raw mode + mouse capture** <!-- test: [no-test] -->
+- [x] **restore_terminal() cleanup on exit** <!-- test: [no-test] -->
+- [x] **run_app() main event loop with 50ms poll** <!-- test: [no-test] -->
+- [x] **App struct (repo, data, view, commit_idx, selected_file, mouse, should_quit, message)** <!-- test: [no-test] -->
+- [x] **App::new() initialize from CLI args** <!-- test: [no-test] -->
+- [x] **Cli struct (limit, dry_run)** <!-- test: [no-test] -->
+- [x] **Cli::parse_checked() with validation** <!-- test: [no-test] -->
+- [x] **--limit flag for commit count** <!-- test: [no-test] -->
+- [x] **--dry-run flag for testing** <!-- test: [no-test] -->
+- [x] **Post-exit message display** <!-- test: [no-test] -->
+- [x] **App::current_commit_label() format hash** <!-- test: [no-test] -->
+- [x] **App::files_at_current_commit() sorted by size** <!-- test: [no-test] -->
+- [x] **App::file_health() get status for path** <!-- test: [no-test] -->
+- [x] **App::handle_click() dispatch File/ViewTab** <!-- test: [no-test] -->
+- [x] **App::scroll_timeline() with bounds checking** <!-- test: [no-test] -->
+- [x] **App::set_view()** <!-- test: [no-test] -->
+- [x] **App::next_view()** <!-- test: [no-test] -->
+- [x] **App::prev_view()** <!-- test: [no-test] -->
+- [x] **App::restore_selected() restore with message** <!-- test: [no-test] -->
 
 ---
 
 ## Data Model ?? CURRENT
 
-- [x] **HealthStatus enum (Stable, Grew, Shrank, MaybeFucked, New, Deleted)**
-- [x] **HealthStatus::from_size_change() old/new comparison**
-- [x] **HealthStatus::from_ratio() with 0.7/0.95/1.05 thresholds**
-- [x] **FileSnapshot struct (lines, bytes)**
-- [x] **TrackedFile struct (path, history HashMap)**
-- [x] **TrackedFile::new()**
-- [x] **TrackedFile::lines_at() get lines at commit index**
-- [x] **TrackedFile::health_at() compare to previous commit**
-- [x] **CommitInfo struct (oid, summary, author, timestamp, files_changed, insertions, deletions)**
-- [x] **RepoData struct (commits Vec, files HashMap)**
-- [x] **RepoData::new()**
+- [x] **HealthStatus enum (Stable, Grew, Shrank, MaybeFucked, New, Deleted)** <!-- test: [no-test] -->
+- [x] **HealthStatus::from_size_change() old/new comparison** <!-- test: tests/data_tests.rs::test_health_none_to_some_is_new -->
+- [x] **HealthStatus::from_ratio() with 0.7/0.95/1.05 thresholds** <!-- test: tests/data_tests.rs::test_health_ratio_under_70_is_fucked -->
+- [x] **FileSnapshot struct (lines, bytes)** <!-- test: [no-test] -->
+- [x] **TrackedFile struct (path, history HashMap)** <!-- test: [no-test] -->
+- [x] **TrackedFile::new()** <!-- test: [no-test] -->
+- [x] **TrackedFile::lines_at() get lines at commit index** <!-- test: tests/data_tests.rs::test_tracked_file_lines_at_present -->
+- [x] **TrackedFile::health_at() compare to previous commit** <!-- test: tests/data_tests.rs::test_tracked_file_health_at_shrink -->
+- [x] **CommitInfo struct (oid, summary, author, timestamp, files_changed, insertions, deletions)** <!-- test: [no-test] -->
+- [x] **RepoData struct (commits Vec, files HashMap)** <!-- test: [no-test] -->
+- [x] **RepoData::new()** <!-- test: [no-test] -->
 
 ---
 
 ## Git Integration ?? CURRENT
 
-- [x] **load_repo_data() main loader function**
-- [x] **collect_commit_oids() revwalk with TOPOLOGICAL|TIME sort**
-- [x] **build_commit_info() extract commit metadata**
-- [x] **get_diff_stats() insertions/deletions count**
-- [x] **collect_file_snapshots() tree walk for files**
-- [x] **process_blob_entry() count newlines in blob**
-- [x] **format_oid() 8-char hash display**
-- [x] **get_file_content() retrieve file at commit**
-- [x] **restore_file() write file to disk**
+- [x] **load_repo_data() main loader function** <!-- test: [no-test] -->
+- [x] **collect_commit_oids() revwalk with TOPOLOGICAL|TIME sort** <!-- test: [no-test] -->
+- [x] **build_commit_info() extract commit metadata** <!-- test: [no-test] -->
+- [x] **get_diff_stats() insertions/deletions count** <!-- test: [no-test] -->
+- [x] **collect_file_snapshots() tree walk for files** <!-- test: [no-test] -->
+- [x] **process_blob_entry() count newlines in blob** <!-- test: [no-test] -->
+- [x] **format_oid() 8-char hash display** <!-- test: [no-test] -->
+- [x] **get_file_content() retrieve file at commit** <!-- test: [no-test] -->
+- [x] **restore_file() write file to disk** <!-- test: [no-test] -->
 
 ---
 
 ## Input Handling ?? CURRENT
 
-- [x] **HitBox struct (rect, id)**
-- [x] **HitId enum (File, ViewTab, None)**
-- [x] **MouseState struct (x, y, hover)**
-- [x] **MouseState::update_position()**
-- [x] **MouseState::set_hover()**
-- [x] **hit_test() find element under cursor**
-- [x] **handle_mouse() dispatch Moved/Down/Scroll**
-- [x] **handle_key() keyboard dispatch**
-- [x] **view_from_key() map 1-5 to ViewMode**
-- [x] **handle_navigation() arrows/tab**
-- [x] **Q key quits app**
-- [x] **R key restores selected file**
-- [x] **Esc key deselects file**
-- [x] **Left/Right arrows navigate timeline**
-- [x] **Tab/BackTab cycles views**
-- [x] **ScrollUp moves timeline backward**
-- [x] **ScrollDown moves timeline forward**
-- [x] **Click file to select**
-- [x] **Click tab to switch view**
-- [x] **Hover highlights element**
+- [x] **HitBox struct (rect, id)** <!-- test: [no-test] -->
+- [x] **HitId enum (File, ViewTab, None)** <!-- test: [no-test] -->
+- [x] **MouseState struct (x, y, hover)** <!-- test: [no-test] -->
+- [x] **MouseState::update_position()** <!-- test: [no-test] -->
+- [x] **MouseState::set_hover()** <!-- test: [no-test] -->
+- [x] **hit_test() find element under cursor** <!-- test: tests/input_tests.rs::test_hit_test_hit_returns_id -->
+- [x] **handle_mouse() dispatch Moved/Down/Scroll** <!-- test: [no-test] -->
+- [x] **handle_key() keyboard dispatch** <!-- test: [no-test] -->
+- [x] **view_from_key() map 1-5 to ViewMode** <!-- test: [no-test] -->
+- [x] **handle_navigation() arrows/tab** <!-- test: [no-test] -->
+- [x] **Q key quits app** <!-- test: [no-test] -->
+- [x] **R key restores selected file** <!-- test: [no-test] -->
+- [x] **Esc key deselects file** <!-- test: [no-test] -->
+- [x] **Left/Right arrows navigate timeline** <!-- test: [no-test] -->
+- [x] **Tab/BackTab cycles views** <!-- test: [no-test] -->
+- [x] **ScrollUp moves timeline backward** <!-- test: [no-test] -->
+- [x] **ScrollDown moves timeline forward** <!-- test: [no-test] -->
+- [x] **Click file to select** <!-- test: [no-test] -->
+- [x] **Click tab to switch view** <!-- test: [no-test] -->
+- [x] **Hover highlights element** <!-- test: [no-test] -->
 
 ---
 
 ## Treemap View ?? CURRENT
 
-- [x] **ViewMode enum (Treemap, Heatmap, Minimap, River, Focus)**
-- [x] **ViewMode::ALL const array**
-- [x] **ViewMode::name() display string**
-- [x] **ViewMode::index() numeric index**
-- [x] **ViewMode::from_index() with default fallback**
-- [x] **ViewMode::next() cycle forward**
-- [x] **ViewMode::prev() cycle backward**
-- [x] **RenderResult struct (hit_boxes Vec)**
-- [x] **draw() dispatch to current view**
-- [x] **CLR_STABLE constant (60,60,60 gray)**
-- [x] **CLR_GREW constant (80,200,120 green)**
-- [x] **CLR_SHRANK constant (200,200,80 yellow)**
-- [x] **CLR_FUCKED constant (255,80,80 red)**
-- [x] **CLR_NEW constant (80,180,255 blue)**
-- [x] **CLR_HOVER constant (255,0,255 magenta)**
-- [x] **CLR_SELECTED constant (0,255,255 cyan)**
-- [x] **draw() main treemap render with 4-chunk layout**
-- [x] **draw_header() title + view tabs**
-- [x] **draw_timeline() slider with position marker**
-- [x] **draw_treemap_area() file rectangles**
-- [x] **draw_status() bottom hints bar**
-- [x] **health_color() map HealthStatus to Color**
-- [x] **truncate_path() shorten filename for display**
-- [x] **compute_treemap_layout() sequential strip algorithm**
-- [x] **File rectangle shows truncated name**
-- [x] **File rectangle shows line count**
-- [x] **Hit boxes registered for files**
-- [x] **Hit boxes registered for view tabs**
-- [x] **Active tab highlighted (black on cyan)**
-- [x] **Tab hover highlight (cyan text)**
-- [x] **Timeline shows ◉ at current position**
-- [x] **Timeline shows N / total**
-- [x] **Timeline shows commit summary (40 chars)**
-- [x] **Files panel shows commit hash**
-- [x] **Treemap limited to 20 files**
+- [x] **ViewMode enum (Treemap, Heatmap, Minimap, River, Focus)** <!-- test: [no-test] -->
+- [x] **ViewMode::ALL const array** <!-- test: tests/input_tests.rs::test_viewmode_all_array -->
+- [x] **ViewMode::name() display string** <!-- test: tests/input_tests.rs::test_viewmode_name -->
+- [x] **ViewMode::index() numeric index** <!-- test: tests/input_tests.rs::test_viewmode_index -->
+- [x] **ViewMode::from_index() with default fallback** <!-- test: tests/input_tests.rs::test_viewmode_from_index_valid -->
+- [x] **ViewMode::next() cycle forward** <!-- test: tests/input_tests.rs::test_viewmode_next_cycles -->
+- [x] **ViewMode::prev() cycle backward** <!-- test: tests/input_tests.rs::test_viewmode_prev_cycles -->
+- [x] **RenderResult struct (hit_boxes Vec)** <!-- test: [no-test] -->
+- [x] **draw() dispatch to current view** <!-- test: [no-test] -->
+- [x] **CLR_STABLE constant (60,60,60 gray)** <!-- test: [no-test] -->
+- [x] **CLR_GREW constant (80,200,120 green)** <!-- test: [no-test] -->
+- [x] **CLR_SHRANK constant (200,200,80 yellow)** <!-- test: [no-test] -->
+- [x] **CLR_FUCKED constant (255,80,80 red)** <!-- test: [no-test] -->
+- [x] **CLR_NEW constant (80,180,255 blue)** <!-- test: [no-test] -->
+- [x] **CLR_HOVER constant (255,0,255 magenta)** <!-- test: [no-test] -->
+- [x] **CLR_SELECTED constant (0,255,255 cyan)** <!-- test: [no-test] -->
+- [x] **draw() main treemap render with 4-chunk layout** <!-- test: [no-test] -->
+- [x] **draw_header() title + view tabs** <!-- test: [no-test] -->
+- [x] **draw_timeline() slider with position marker** <!-- test: [no-test] -->
+- [x] **draw_treemap_area() file rectangles** <!-- test: [no-test] -->
+- [x] **draw_status() bottom hints bar** <!-- test: [no-test] -->
+- [x] **health_color() map HealthStatus to Color** <!-- test: [no-test] -->
+- [x] **truncate_path() shorten filename for display** <!-- test: [no-test] -->
+- [x] **compute_treemap_layout() sequential strip algorithm** <!-- test: [no-test] -->
+- [x] **File rectangle shows truncated name** <!-- test: [no-test] -->
+- [x] **File rectangle shows line count** <!-- test: [no-test] -->
+- [x] **Hit boxes registered for files** <!-- test: [no-test] -->
+- [x] **Hit boxes registered for view tabs** <!-- test: [no-test] -->
+- [x] **Active tab highlighted (black on cyan)** <!-- test: [no-test] -->
+- [x] **Tab hover highlight (cyan text)** <!-- test: [no-test] -->
+- [x] **Timeline shows ◉ at current position** <!-- test: [no-test] -->
+- [x] **Timeline shows N / total** <!-- test: [no-test] -->
+- [x] **Timeline shows commit summary (40 chars)** <!-- test: [no-test] -->
+- [x] **Files panel shows commit hash** <!-- test: [no-test] -->
+- [x] **Treemap limited to 20 files** <!-- test: [no-test] -->
 - [ ] **Squarified layout algorithm (better aspect ratios)**
 - [ ] **Filter binary files (gif/png/jpg/etc)**
 - [ ] **Color legend for health status**

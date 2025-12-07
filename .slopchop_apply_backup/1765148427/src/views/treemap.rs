@@ -113,7 +113,7 @@ fn draw_treemap_area(f: &mut Frame, area: Rect, app: &App, result: &mut RenderRe
         let is_selected = app.selected_file.as_ref() == Some(path);
         let bg = if is_selected { CLR_SELECTED } else if is_hover { CLR_HOVER } else { health_color(health) };
         let name = truncate_path(path, rect.width as usize);
-        let content = Paragraph::new(vec![Line::from(name), Line::from(format!("{lines}"))])
+        let content = Paragraph::new(vec![Line::from(name), Line::from(format!("{lines} ln"))])
             .style(Style::default().bg(bg).fg(Color::Black))
             .block(Block::default().borders(Borders::ALL));
         f.render_widget(content, *rect);
@@ -139,20 +139,13 @@ fn health_color(status: HealthStatus) -> Color {
     }
 }
 
-/// Truncate a file path to fit within max characters.
-/// Extracts filename and adds ".." if too long.
-pub fn truncate_path(path: &str, max: usize) -> String {
+fn truncate_path(path: &str, max: usize) -> String {
     if path.len() <= max { return path.to_string(); }
-    if max <= 2 { return path.chars().take(max).collect(); }
-    let filename = path.rsplit('/').next().unwrap_or(path);
-    if filename.len() <= max { return filename.to_string(); }
-    filename.chars().take(max.saturating_sub(2)).collect::<String>() + ".."
+    path.rsplit('/').next().unwrap_or(path).chars().take(max.saturating_sub(2)).collect::<String>() + ".."
 }
 
-/// Compute treemap layout using sequential strip algorithm.
-/// Returns vec of (path, lines, rect) for each file.
 #[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-pub fn compute_treemap_layout(files: &[(String, usize)], area: Rect) -> Vec<(String, usize, Rect)> {
+fn compute_treemap_layout(files: &[(String, usize)], area: Rect) -> Vec<(String, usize, Rect)> {
     let total: usize = files.iter().map(|(_, s)| s).sum();
     if total == 0 || area.width < 2 || area.height < 2 { return vec![]; }
 

@@ -243,7 +243,7 @@ id = "git-load-repo"
 text = "load_repo_data() main loader function"
 status = "done"
 section = "git"
-test = "[no-test]"
+test = "tests/git_tests.rs::test_load_repo_data_single_commit"
 order = 0
 
 [[tasks]]
@@ -291,7 +291,7 @@ id = "git-format-oid"
 text = "format_oid() 8-char hash display"
 status = "done"
 section = "git"
-test = "[no-test]"
+test = "tests/git_tests.rs::test_format_oid_length"
 order = 6
 
 [[tasks]]
@@ -299,7 +299,7 @@ id = "git-get-content"
 text = "get_file_content() retrieve file at commit"
 status = "done"
 section = "git"
-test = "[no-test]"
+test = "tests/git_tests.rs::test_get_file_content_retrieves_correct_version"
 order = 7
 
 [[tasks]]
@@ -307,7 +307,7 @@ id = "git-restore-file"
 text = "restore_file() write file to disk"
 status = "done"
 section = "git"
-test = "[no-test]"
+test = "tests/git_tests.rs::test_restore_file_writes_to_disk"
 order = 8
 
 [[tasks]]
@@ -331,7 +331,7 @@ id = "input-mouse-state"
 text = "MouseState struct (x, y, hover)"
 status = "done"
 section = "input"
-test = "[no-test]"
+test = "tests/input_tests.rs::test_mouse_state_default"
 order = 2
 
 [[tasks]]
@@ -339,7 +339,7 @@ id = "input-mouse-update-pos"
 text = "MouseState::update_position()"
 status = "done"
 section = "input"
-test = "[no-test]"
+test = "tests/input_tests.rs::test_mouse_state_update_position"
 order = 3
 
 [[tasks]]
@@ -347,7 +347,7 @@ id = "input-mouse-set-hover"
 text = "MouseState::set_hover()"
 status = "done"
 section = "input"
-test = "[no-test]"
+test = "tests/input_tests.rs::test_mouse_state_set_hover"
 order = 4
 
 [[tasks]]
@@ -499,7 +499,7 @@ id = "app-handle-click"
 text = "App::handle_click() dispatch File/ViewTab"
 status = "done"
 section = "core"
-test = "[no-test]"
+test = "tests/app_tests.rs::test_handle_click_file_sets_selected"
 order = 14
 
 [[tasks]]
@@ -507,7 +507,7 @@ id = "app-scroll-timeline"
 text = "App::scroll_timeline() with bounds checking"
 status = "done"
 section = "core"
-test = "[no-test]"
+test = "tests/app_tests.rs::test_scroll_timeline_forward_from_zero"
 order = 15
 
 [[tasks]]
@@ -515,7 +515,7 @@ id = "app-set-view"
 text = "App::set_view()"
 status = "done"
 section = "core"
-test = "[no-test]"
+test = "tests/app_tests.rs::test_set_view_direct"
 order = 16
 
 [[tasks]]
@@ -523,7 +523,7 @@ id = "app-next-view"
 text = "App::next_view()"
 status = "done"
 section = "core"
-test = "[no-test]"
+test = "tests/app_tests.rs::test_next_view_full_cycle"
 order = 17
 
 [[tasks]]
@@ -531,7 +531,7 @@ id = "app-prev-view"
 text = "App::prev_view()"
 status = "done"
 section = "core"
-test = "[no-test]"
+test = "tests/app_tests.rs::test_prev_view_full_cycle"
 order = 18
 
 [[tasks]]
@@ -723,7 +723,7 @@ id = "treemap-truncate-path"
 text = "truncate_path() shorten filename for display"
 status = "done"
 section = "treemap"
-test = "[no-test]"
+test = "tests/treemap_tests.rs::test_truncate_path_short_unchanged"
 order = 23
 
 [[tasks]]
@@ -731,7 +731,7 @@ id = "treemap-compute-layout"
 text = "compute_treemap_layout() sequential strip algorithm"
 status = "done"
 section = "treemap"
-test = "[no-test]"
+test = "tests/treemap_tests.rs::test_treemap_layout_rects_within_bounds"
 order = 24
 
 [[tasks]]
@@ -819,7 +819,7 @@ id = "treemap-max-20-files"
 text = "Treemap limited to 20 files"
 status = "done"
 section = "treemap"
-test = "[no-test]"
+test = "tests/treemap_tests.rs::test_treemap_layout_respects_20_file_limit"
 order = 35
 
 [[tasks]]
