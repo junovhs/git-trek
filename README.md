@@ -8,195 +8,152 @@
 ║  ╚██████╔╝██║   ██║         ██║   ██║  ██║███████╗██║  ██╗    ║
 ║   ╚═════╝ ╚═╝   ╚═╝         ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝    ║
 ║                                                               ║
-║         Navigate Git History Like SNES Save Files!            ║
+║              Visual Git Time Travel & File Recovery           ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
 ```
 
-> *"Captain's Log, Stardate 2025: Where we're going, we don't need `git log --graph`."*
+> *"When did this file get fucked?"* — Every developer, eventually
 
-<p align="center">
-  <img src="assets/demo.gif" alt="git-trek demo" width="100%" />
-</p>
+**git-trek** is a visual file health monitor for git. See your entire codebase as a treemap, scrub through time with your mouse, and instantly spot when files got truncated, deleted, or corrupted. One click to restore.
 
-**git-trek** is a card-based, retro-futuristic TUI that transforms your git history into a navigable deck of commits. Scrub through time with left/right navigation while your working directory updates in real-time, letting you see and test your code at any point in history—without the fear of breaking anything.
+## The Problem
 
-## 🏁 Installation
+You're coding. Something breaks. A file got truncated, filled with junk, or mysteriously emptied. Now you need to:
+1. Figure out *when* it broke
+2. Find what it looked like *before*
+3. Restore it
 
-### Prerequisites
+The git CLI way: `git log --oneline -- file`, squint at hashes, `git show abc123:file`, copy-paste... painful.
 
-The only requirement is the **Rust toolchain**:
+**git-trek way**: Scroll wheel to scrub time. Red = maybe fucked. Click. Restore. Done.
 
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-
-### Development (Recommended)
-
-**Clone and run locally without touching your PATH:**
+## Installation
 
 ```bash
+# Clone and build
 git clone https://github.com/junovhs/git-trek.git
 cd git-trek
+cargo install --path .
+
+# Or just run it
 cargo run --release
 ```
 
-This keeps everything isolated. No global installs, no PATH pollution. Perfect for hacking on git-trek or testing it out.
+Requires Rust toolchain: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
 
-**To use from any directory**, create an alias in your shell config:
-
-```bash
-# Add to ~/.bashrc or ~/.zshrc
-alias gt='/path/to/git-trek/target/release/git-trek'
-```
-
-### Production Install (When You're Ready to Ship)
-
-**Only install globally when you're sure you want it permanently:**
+## Usage
 
 ```bash
-cargo install --path .
+# In any git repo
+git-trek
+
+# Load more history
+git-trek --limit 500
 ```
 
-This places the binary in `~/.cargo/bin/` and makes `git-trek` available everywhere.
+## The Interface
 
-**To uninstall:**
+```
+┌─ GIT-TREK v3.0 ─────────────────────────────────────────────────┐
+│ [1] Treemap  [2] Heatmap  [3] Minimap  [4] River  [5] Focus     │
+├─ 42 / 100 │ fix: restore deleted function ──────────────────────┤
+│ ────────────────────────◉───────────────────────────────────────│
+├─ Files @ a1b2c3d4 ──────────────────────────────────────────────┤
+│┌──────────────────────┐┌────────┐┌────────┐┌──────┐┌───────────┐│
+││                      ││        ││   🔴   ││      ││           ││
+││    src/app.rs        ││main.rs ││lib.rs  ││cli.rs││ tests/    ││
+││      152 ln          ││ 89 ln  ││ 12 ln  ││45 ln ││           ││
+││                      ││        ││        ││      ││           ││
+│└──────────────────────┘└────────┘└────────┘└──────┘└───────────┘│
+├─────────────────────────────────────────────────────────────────┤
+│ [click] select | [scroll] time travel | [R] restore | [Q] quit  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Rectangle size** = file size (lines of code)
+**Color** = health status:
+- ⬛ Gray: Stable, no significant change
+- 🟢 Green: File grew
+- 🟡 Yellow: File shrank slightly  
+- 🔴 Red: **File shrank >30%** — probably fucked
+- 🔵 Blue: New file
+
+## Controls
+
+| Input | Action |
+|-------|--------|
+| **Scroll wheel** | Scrub through commits |
+| **← →** | Navigate timeline |
+| **Click file** | Select for restore |
+| **Hover** | Highlight file (magenta) |
+| **R** | Restore selected file from current commit |
+| **1-5** | Switch view modes |
+| **Tab** | Cycle views |
+| **Esc** | Deselect |
+| **Q** | Quit |
+
+## View Modes
+
+| Mode | Purpose | Status |
+|------|---------|--------|
+| **[1] Treemap** | WinDirStat-style overview | ✅ Working |
+| **[2] Heatmap** | Activity over time | 🚧 Coming |
+| **[3] Minimap** | Code shape comparison | 🚧 Coming |
+| **[4] River** | File size evolution | 🚧 Coming |
+| **[5] Focus** | Deep dive on one file | 🚧 Coming |
+
+## How It Works
+
+1. **Loads your git history** — walks commits, records file sizes at each point
+2. **Builds a treemap** — files sized proportionally to line count
+3. **Tracks health** — compares each commit to its parent, flags suspicious changes
+4. **Mouse-driven navigation** — scroll to time travel, click to select, R to restore
+
+No branches created. No working directory changes. Pure read-only inspection until you explicitly restore.
+
+## When To Use It
+
+- **"Something broke, when?"** — Scroll back, watch for red
+- **"What did this file look like before?"** — Navigate to commit, click file, R to restore
+- **"Overview of my codebase"** — Treemap shows relative file sizes instantly
+- **"Which files change together?"** — Scrub time, watch the colors shift
+
+## Options
 
 ```bash
-cargo uninstall git-trek
+git-trek --limit 200    # Load 200 commits (default: 100)
+git-trek --help         # Show help
 ```
 
----
-
-## 🎯 Features
-
-### 🃏 Card-Based Navigation
-Navigate through commits like flipping through SNES save file cards. Three commits visible at once: previous, current (highlighted), and next. Use **left/right arrows** or **A/D** to scrub through time.
-
-### ⚡ Real-Time File Scrubbing
-Your working directory updates as you navigate (with smart debouncing). Watch your editor change in real-time as you explore different points in history. No git commands to memorize—just arrow keys.
-
-### 🛡️ Safe, Non-Destructive
-Creates a hidden session branch to safely scrub through history. Your original branch stays untouched. Quit anytime with `Q` and you're instantly back to where you started.
-
-### 🎨 Psychedelic Sci-Fi UI
-Vibrant magenta, cyan, and yellow colors on pure black. The interface feels like a retro space console from 1989. Because exploring git history should look *cool*.
-
-### 📊 Detailed Commit Inspection
-Press `Enter` on any card to see full commit details: message, author, timestamp, and diff statistics. All presented in a clean, structured layout.
-
-### 🌳 Dirty Tree Handling
-Got uncommitted changes? No problem. git-trek offers three choices:
-- **Stash** - Temporarily save changes (restored on exit)
-- **Continue** - Browse in read-only mode (no checkout allowed)
-- **Quit** - Exit without changes
-
-No more "working tree dirty" errors blocking you.
-
----
-
-## 🕹️ The Workflow
-
-1. **Launch**: Run `cargo run --release` (or `git-trek` if installed)
-2. **Browse**: Use **← →** or **A D** to flip through commit cards
-3. **Watch**: Your files update in your editor ~200ms after you stop navigating
-4. **Inspect**: Press **Enter** to see full commit details
-5. **Checkout**: Press **C** from detail view to permanently checkout a commit
-6. **Exit**: Press **Q** anytime to return to your original branch
-
----
-
-## ⌨️ Controls
-
-### Card View (Main)
-| Key | Action |
-|-----|--------|
-| `←` `→` or `A` `D` | Navigate left/right through commit cards |
-| `Enter` | Open detail view for current card |
-| `P` | Pin anchor (marks current position) |
-| `Q` | Quit and restore original branch |
-| `?` | Show help |
-
-### Detail View
-| Key | Action |
-|-----|--------|
-| `Esc` or `Q` | Back to card view |
-| `C` | Checkout this commit (with confirmation) |
-| `T` | Toggle diff view |
-| `P` / `F` | Mark test pass/fail (manual) |
-
-### Checkout Confirmation
-| Key | Action |
-|-----|--------|
-| `Y` | Confirm checkout (detaches HEAD) |
-| `N` or `Esc` | Cancel and return to detail view |
-
----
-
-## 🚨 Requirements
+## Requirements
 
 - Git repository
-- Terminal with color support
+- Terminal with mouse support (most modern terminals)
 - Rust toolchain (for building)
 
-**Note:** git-trek handles dirty working trees gracefully—no need to commit or stash first.
+## Development
+
+```bash
+cargo run              # Debug build
+cargo run --release    # Fast build  
+cargo test             # Run tests
+cargo clippy           # Lint
+```
+
+## Roadmap
+
+- [x] Treemap view with health coloring
+- [x] Mouse hover/click/scroll
+- [x] File restore from any commit
+- [ ] Heatmap view (activity over time)
+- [ ] Minimap view (code shape diff)
+- [ ] River view (size evolution)
+- [ ] Focus view (single file deep dive)
+- [ ] Sparklines per file
+- [ ] Filter by path/extension
+- [ ] Search commits
 
 ---
 
-## 🛠️ Development
-
-### Quick Start
-```bash
-git clone https://github.com/junovhs/git-trek.git
-cd git-trek
-cargo run
-```
-
-### Build Release Binary
-```bash
-cargo build --release
-# Binary is at: target/release/git-trek
-```
-
-### Run Tests
-```bash
-cargo test
-cargo clippy
-```
-
-### Advanced Options
-```bash
-git-trek --autostash      # Auto-stash uncommitted changes
-git-trek --worktree       # Use separate worktree (faster on large repos)
-git-trek --since 2024-01-01  # Only show commits after date
-git-trek --author "name"  # Filter by author
-```
-
----
-
-## 🎮 Pro Tips
-
-- **Use `--release` for smooth navigation**: Debug builds make git operations slow
-- **Run in large repos**: git-trek shines when you have hundreds of commits
-- **Test different states**: Perfect for bisecting bugs or finding when features were added
-- **Pin anchors**: Use `P` to mark important commits as you explore
-- **Read-only mode**: Great for safely browsing history without checkout privileges
-
----
-
-## 🐛 Troubleshooting
-
-### "Navigation feels laggy"
-Use `cargo run --release` instead of `cargo run`. Debug builds are 10x slower.
-
-### "Files aren't updating"
-Files update ~200ms after you **stop** navigating (debounced). This prevents the multi-line jump bug while keeping the scrubbing feature.
-
-### "I want to reset everything"
-```bash
-cargo clean
-rm -rf target
-cargo build --release
-```
-
----
+*Built for developers who think visually and hate typing `git log`.*

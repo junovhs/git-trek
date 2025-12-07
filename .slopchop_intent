@@ -1,4 +1,0 @@
-Fix timeline to show single marker at correct position
-
-CHANGES:
-1. src/views/treemap.rs: Fix timeline marker calculation to show exactly one dot
