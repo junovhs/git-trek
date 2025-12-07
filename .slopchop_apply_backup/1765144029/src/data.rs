@@ -72,9 +72,7 @@ pub struct CommitInfo {
     pub timestamp: i64,
     #[allow(dead_code)]
     pub files_changed: Vec<String>,
-    #[allow(dead_code)]
     pub insertions: usize,
-    #[allow(dead_code)]
     pub deletions: usize,
 }
 

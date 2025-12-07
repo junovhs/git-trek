@@ -1,4 +1,4 @@
-Fix main.rs to only declare new modules, remove old module references
+Fix timeline to show single marker at correct position
 
 CHANGES:
-1. src/main.rs: Remove old module declarations (app_detail, shell, ui, ui_cards, ui_modals)
+1. src/views/treemap.rs: Fix timeline marker calculation to show exactly one dot

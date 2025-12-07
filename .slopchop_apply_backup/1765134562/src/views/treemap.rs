@@ -113,7 +113,7 @@ fn draw_treemap_area(f: &mut Frame, area: Rect, app: &App, result: &mut RenderRe
         let is_selected = app.selected_file.as_ref() == Some(path);
         let bg = if is_selected { CLR_SELECTED } else if is_hover { CLR_HOVER } else { health_color(health) };
         let name = truncate_path(path, rect.width as usize);
-        let content = Paragraph::new(vec![Line::from(name), Line::from(format!("{lines} ln"))])
+        let content = Paragraph::new(vec![Line::from(name), Line::from(format!("{} ln", lines))])
             .style(Style::default().bg(bg).fg(Color::Black))
             .block(Block::default().borders(Borders::ALL));
         f.render_widget(content, *rect);
@@ -123,7 +123,7 @@ fn draw_treemap_area(f: &mut Frame, area: Rect, app: &App, result: &mut RenderRe
 
 fn draw_status(f: &mut Frame, area: Rect, app: &App) {
     let status = match &app.selected_file {
-        Some(path) => format!("Selected: {path} | [R]estore [Q]uit"),
+        Some(path) => format!("Selected: {} | [R]estore [Q]uit", path),
         None => "[click] select | [scroll] time travel | [1-5] views | [Q]uit".to_string(),
     };
     f.render_widget(Paragraph::new(status).style(Style::default().fg(Color::DarkGray)), area);
@@ -131,11 +131,12 @@ fn draw_status(f: &mut Frame, area: Rect, app: &App) {
 
 fn health_color(status: HealthStatus) -> Color {
     match status {
-        HealthStatus::Stable | HealthStatus::Deleted => CLR_STABLE,
+        HealthStatus::Stable => CLR_STABLE,
         HealthStatus::Grew => CLR_GREW,
         HealthStatus::Shrank => CLR_SHRANK,
         HealthStatus::MaybeFucked => CLR_FUCKED,
         HealthStatus::New => CLR_NEW,
+        HealthStatus::Deleted => CLR_STABLE,
     }
 }
 
@@ -144,7 +145,6 @@ fn truncate_path(path: &str, max: usize) -> String {
     path.rsplit('/').next().unwrap_or(path).chars().take(max.saturating_sub(2)).collect::<String>() + ".."
 }
 
-#[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn compute_treemap_layout(files: &[(String, usize)], area: Rect) -> Vec<(String, usize, Rect)> {
     let total: usize = files.iter().map(|(_, s)| s).sum();
     if total == 0 || area.width < 2 || area.height < 2 { return vec![]; }
@@ -157,13 +157,13 @@ fn compute_treemap_layout(files: &[(String, usize)], area: Rect) -> Vec<(String,
         let ratio = (*lines as f64) / (total as f64);
         let horizontal = remaining.width >= remaining.height;
         let rect = if horizontal {
-            let w = (f64::from(remaining.width) * ratio).max(4.0).min(f64::from(remaining.width)) as u16;
+            let w = ((remaining.width as f64) * ratio).max(4.0).min(remaining.width as f64) as u16;
             let r = Rect::new(remaining.x, remaining.y, w, remaining.height);
             remaining.x += w;
             remaining.width = remaining.width.saturating_sub(w);
             r
         } else {
-            let h = (f64::from(remaining.height) * ratio).max(3.0).min(f64::from(remaining.height)) as u16;
+            let h = ((remaining.height as f64) * ratio).max(3.0).min(remaining.height as f64) as u16;
             let r = Rect::new(remaining.x, remaining.y, remaining.width, h);
             remaining.y += h;
             remaining.height = remaining.height.saturating_sub(h);

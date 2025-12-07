@@ -12,23 +12,21 @@ pub enum HealthStatus {
 }
 
 impl HealthStatus {
+    #[allow(clippy::cast_precision_loss)]
     pub fn from_size_change(old: Option<usize>, new: Option<usize>) -> Self {
         match (old, new) {
             (None, None) => Self::Stable,
             (None, Some(_)) => Self::New,
             (Some(_), None) => Self::Deleted,
-            (Some(o), Some(n)) => Self::from_ratio(o, n),
+            (Some(o), Some(n)) => {
+                if o == 0 { return Self::New; }
+                let ratio = n as f64 / o as f64;
+                if ratio < 0.7 { Self::MaybeFucked }
+                else if ratio < 0.95 { Self::Shrank }
+                else if ratio > 1.05 { Self::Grew }
+                else { Self::Stable }
+            }
         }
-    }
-
-    #[allow(clippy::cast_precision_loss)]
-    fn from_ratio(old: usize, new: usize) -> Self {
-        if old == 0 { return Self::New; }
-        let ratio = new as f64 / old as f64;
-        if ratio < 0.7 { Self::MaybeFucked }
-        else if ratio < 0.95 { Self::Shrank }
-        else if ratio > 1.05 { Self::Grew }
-        else { Self::Stable }
     }
 }
 
@@ -72,9 +70,7 @@ pub struct CommitInfo {
     pub timestamp: i64,
     #[allow(dead_code)]
     pub files_changed: Vec<String>,
-    #[allow(dead_code)]
     pub insertions: usize,
-    #[allow(dead_code)]
     pub deletions: usize,
 }
 

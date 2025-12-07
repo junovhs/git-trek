@@ -17,31 +17,26 @@ impl HealthStatus {
             (None, None) => Self::Stable,
             (None, Some(_)) => Self::New,
             (Some(_), None) => Self::Deleted,
-            (Some(o), Some(n)) => Self::from_ratio(o, n),
+            (Some(o), Some(n)) => {
+                if o == 0 { return Self::New; }
+                let ratio = n as f64 / o as f64;
+                if ratio < 0.7 { Self::MaybeFucked }
+                else if ratio < 0.95 { Self::Shrank }
+                else if ratio > 1.05 { Self::Grew }
+                else { Self::Stable }
+            }
         }
-    }
-
-    #[allow(clippy::cast_precision_loss)]
-    fn from_ratio(old: usize, new: usize) -> Self {
-        if old == 0 { return Self::New; }
-        let ratio = new as f64 / old as f64;
-        if ratio < 0.7 { Self::MaybeFucked }
-        else if ratio < 0.95 { Self::Shrank }
-        else if ratio > 1.05 { Self::Grew }
-        else { Self::Stable }
     }
 }
 
 #[derive(Clone, Debug)]
 pub struct FileSnapshot {
     pub lines: usize,
-    #[allow(dead_code)]
     pub bytes: usize,
 }
 
 #[derive(Clone, Debug)]
 pub struct TrackedFile {
-    #[allow(dead_code)]
     pub path: String,
     pub history: HashMap<usize, FileSnapshot>,
 }
@@ -66,15 +61,10 @@ impl TrackedFile {
 pub struct CommitInfo {
     pub oid: Oid,
     pub summary: String,
-    #[allow(dead_code)]
     pub author: String,
-    #[allow(dead_code)]
     pub timestamp: i64,
-    #[allow(dead_code)]
     pub files_changed: Vec<String>,
-    #[allow(dead_code)]
     pub insertions: usize,
-    #[allow(dead_code)]
     pub deletions: usize,
 }
 
