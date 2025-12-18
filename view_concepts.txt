@@ -239,3 +239,52 @@ LAYER 3 (v5.0) - "Oh god why did I start this"
 So: yay or nay?
 My vote: Yay conceptually, nay for v3.0 scope. Get the visual foundation rock solid first. The treesitter stuff can slot in later as an enhancement to Focus view.
 What do you think - does that layered approach work, or do you want to go full send on the semantic stuff now?
+
+
+chatgpt response:
+
+Yes—this hits the mark, and it’s pointed at a very real workflow: “something broke, I don’t want to spelunk `git log`, show me where the damage is and let me restore fast.” That intent is clear in your controls + “when to use it” framing.
+
+## Must-haves vs nice-to-haves
+
+### Must-haves (ship-quality core loop)
+
+1. **Treemap (View 1)** as the default landing + time scrub + selection. You already have the core interaction model and “health” coloring working.
+2. **Focus (View 5)** because it completes the loop: once the treemap tells you “this file went red,” Focus is where you *confirm*, *inspect*, and *restore with confidence* (preview + commit list + sparkline + warnings).
+3. **Polish utilities that make the above usable on real repos**: filter by path/extension, search commits, and help overlay. Those are explicitly in your roadmap and they matter more than another visualization when you’re in a large codebase.
+
+If you do only two views for a “v1 that people actually keep,” do **Treemap + Focus**.
+
+### Nice-to-haves (high value, but not required to make the tool “work”)
+
+* **Heatmap (View 2)**: highest ROI of the remaining three. It answers “what’s thrashing” and “what changed together” very quickly.
+* **Minimap (View 3)**: useful, but I would strongly consider *embedding it inside Focus* rather than making it a full separate mode, since you already plan “minimap thumbnail per commit” in Focus.
+* **River (View 4)**: coolest visually, but the easiest to become expensive/complex and the least directly tied to “restore the broken file now.” It’s a “v2/v3 delight” feature, not a “v1 saves my day” feature.
+
+## Any views to kill?
+
+I would **not kill any**, but I would **de-scope River first** if you need to keep momentum. It’s the most likely to balloon.
+
+I would also **merge Minimap into Focus** unless you have a strong reason it must be a primary navigation mode. That consolidation keeps the UI simpler while still giving you the “shape” insight exactly when the user is already looking at a specific file.
+
+## Missing metaphors / features that will matter in practice
+
+These are not “new views,” they’re *workflow accelerators*:
+
+* **“Find first red” / “jump to suspicious commit” shortcut.** You already compute a health status; add a hotkey that jumps to the nearest commit where a selected file flips into “MaybeFucked.” (This turns time-scrubbing into a 1-keystroke investigation path.)
+* **Pinned baseline compare.** Let the user pin a “known good” commit and compare health/deltas vs that commit (not just parent). This is a very “vibe-coder” mental model: “show me what changed since the last time it worked.”
+* **Branch selection** (eventually) because many people debug on feature branches. You already have it on the roadmap.
+* **Integration hook from SlopChop:** when a compile/test fails, launch git-trek at the last-good → current range, with filters pre-set to files touched by the last AI patch. That makes the suite feel like one coherent product.
+
+## Tree-sitter: yay or nay?
+
+**Yay—if you constrain it to “Focus augmentation,” not “global dependency graph.”**
+
+A practical middle-ground that stays “real” and shippable:
+
+* In **Focus view**, for the selected file at two commits, use tree-sitter to extract a **symbol inventory** (functions/structs/enums) and detect **signature changes** and **deleted symbols**.
+* Display that as a small panel: “Deleted: X, Renamed: Y, Signature changed: Z.” Then you can generate better AI prompts like “restore `fn parse_config` signature to match commit abc123.”
+
+This gives you the “dependencies/types surfaces” benefit *without* committing to whole-repo call graphs (which is where scope goes to die).
+
+Also: you already have tree-sitter in your broader codebase for pattern detection across languages, so the dependency is not foreign to your suite—this supports “yay, but scoped.”

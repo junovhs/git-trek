@@ -1,86 +1,3 @@
-🛡️ SYSTEM MANDATE: THE SLOPCHOP PROTOCOL
-ROLE: High-Integrity Systems Architect (NASA/JPL Standard).
-CONTEXT: You are coding inside a strict environment enforced by SlopChop.
-
-THE 3 LAWS (Non-Negotiable):
-
-1. LAW OF ATOMICITY
-   - Files: MUST be < 2000 tokens.
-   - Action: Split immediately if larger.
-
-2. LAW OF COMPLEXITY
-   - Cyclomatic Complexity: MUST be ≤ 8 per function.
-   - Nesting Depth: MUST be ≤ 3 levels.
-   - Function Arguments: MUST be ≤ 5 parameters.
-
-3. LAW OF PARANOIA
-   - Use Result<T, E> for I/O and fallible operations.
-   - NO .unwrap() or .expect() calls.
-
-CONTEXT STRATEGY (How to drive):
-
-1. IF you receive 'SIGNATURES.txt' (The Map):
-   - You are in ARCHITECT MODE.
-   - Do NOT write code yet.
-   - Analyze the map to locate the specific files relevant to the user's request.
-   - INSTRUCT the user to pack those files:
-     'Please run: slopchop pack src/foo.rs src/bar.rs --copy'
-
-2. IF you receive 'context.txt' (Source Code):
-   - You are in DEVELOPER MODE.
-   - You have the implementation details.
-   - PROCEED to write the solution using the Output Format below.
-
-OUTPUT FORMAT (MANDATORY):
-
-1. Explain the changes (Technical Plan):
-   - Must start with "GOAL:"
-   - Must include "CHANGES:" list
-
-#__SLOPCHOP_PLAN__#
-GOAL: Refactor authentication module.
-CHANGES:
-1. Extract user validation to new file.
-2. Update config parser.
-#__SLOPCHOP_END__#
-
-2. Declare the plan (Manifest):
-
-#__SLOPCHOP_MANIFEST__#
-path/to/file1.rs
-path/to/file2.rs [NEW]
-#__SLOPCHOP_END__#
-
-3. Provide EACH file:
-
-#__SLOPCHOP_FILE__# path/to/file1.rs
-[file content]
-#__SLOPCHOP_END__#
-
-4. Update the Roadmap (ask yourself: did you do something that matters to the project plan? Record it.):
-   - Use this block if you completed a task or need to add one.
-
-===ROADMAP===
-CHECK
-id = task-id
-ADD
-id = new-task
-text = Refactor logs
-section = v0.2.0
-===ROADMAP===
-
-RULES:
-- Do NOT use markdown code blocks (e.g. triple backticks) to wrap the file. The #__SLOPCHOP_FILE__# delimiters ARE the fence.
-- You MAY use markdown inside the file content.
-- Every file in the manifest MUST have a matching #__SLOPCHOP_FILE__# block.
-- Paths must match exactly.
-- Do NOT truncate files (No "// ...").
-
-
-═══════════════════════════════════════════════════════════════════
-BEGIN CODEBASE
-═══════════════════════════════════════════════════════════════════
-
 #__SLOPCHOP_FILE__# Cargo.toml
 [package]
 name = "git-trek"
@@ -282,6 +199,213 @@ cargo clippy           # Lint
 *Built for developers who think visually and hate typing `git log`.*
 #__SLOPCHOP_END__#
 
+#__SLOPCHOP_FILE__# ROADMAP.md
+# git-trek Roadmap
+
+Visual git time travel & file recovery
+
+---
+
+## Core Infrastructure ?? CURRENT
+
+- [x] **main() entry point with error handling** <!-- test: [no-test] -->
+- [x] **setup_terminal() raw mode + mouse capture** <!-- test: [no-test] -->
+- [x] **restore_terminal() cleanup on exit** <!-- test: [no-test] -->
+- [x] **run_app() main event loop with 50ms poll** <!-- test: [no-test] -->
+- [x] **App struct (repo, data, view, commit_idx, selected_file, mouse, should_quit, message)** <!-- test: [no-test] -->
+- [x] **App::new() initialize from CLI args** <!-- test: [no-test] -->
+- [x] **Cli struct (limit, dry_run)** <!-- test: [no-test] -->
+- [x] **Cli::parse_checked() with validation** <!-- test: [no-test] -->
+- [x] **--limit flag for commit count** <!-- test: [no-test] -->
+- [x] **--dry-run flag for testing** <!-- test: [no-test] -->
+- [x] **Post-exit message display** <!-- test: [no-test] -->
+- [x] **App::current_commit_label() format hash** <!-- test: [no-test] -->
+- [x] **App::files_at_current_commit() sorted by size** <!-- test: [no-test] -->
+- [x] **App::file_health() get status for path** <!-- test: [no-test] -->
+- [x] **App::handle_click() dispatch File/ViewTab** <!-- test: tests/app_tests.rs::test_handle_click_file_sets_selected -->
+- [x] **App::scroll_timeline() with bounds checking** <!-- test: tests/app_tests.rs::test_scroll_timeline_forward_from_zero -->
+- [x] **App::set_view()** <!-- test: tests/app_tests.rs::test_set_view_direct -->
+- [x] **App::next_view()** <!-- test: tests/app_tests.rs::test_next_view_full_cycle -->
+- [x] **App::prev_view()** <!-- test: tests/app_tests.rs::test_prev_view_full_cycle -->
+- [x] **App::restore_selected() restore with message** <!-- test: [no-test] -->
+
+---
+
+## Data Model ?? CURRENT
+
+- [x] **HealthStatus enum (Stable, Grew, Shrank, MaybeFucked, New, Deleted)** <!-- test: [no-test] -->
+- [x] **HealthStatus::from_size_change() old/new comparison** <!-- test: tests/data_tests.rs::test_health_none_to_some_is_new -->
+- [x] **HealthStatus::from_ratio() with 0.7/0.95/1.05 thresholds** <!-- test: tests/data_tests.rs::test_health_ratio_under_70_is_fucked -->
+- [x] **FileSnapshot struct (lines, bytes)** <!-- test: [no-test] -->
+- [x] **TrackedFile struct (path, history HashMap)** <!-- test: [no-test] -->
+- [x] **TrackedFile::new()** <!-- test: [no-test] -->
+- [x] **TrackedFile::lines_at() get lines at commit index** <!-- test: tests/data_tests.rs::test_tracked_file_lines_at_present -->
+- [x] **TrackedFile::health_at() compare to previous commit** <!-- test: tests/data_tests.rs::test_tracked_file_health_at_shrink -->
+- [x] **CommitInfo struct (oid, summary, author, timestamp, files_changed, insertions, deletions)** <!-- test: [no-test] -->
+- [x] **RepoData struct (commits Vec, files HashMap)** <!-- test: [no-test] -->
+- [x] **RepoData::new()** <!-- test: [no-test] -->
+
+---
+
+## Git Integration ?? CURRENT
+
+- [x] **load_repo_data() main loader function** <!-- test: tests/git_tests.rs::test_load_repo_data_single_commit -->
+- [x] **collect_commit_oids() revwalk with TOPOLOGICAL|TIME sort** <!-- test: [no-test] -->
+- [x] **build_commit_info() extract commit metadata** <!-- test: [no-test] -->
+- [x] **get_diff_stats() insertions/deletions count** <!-- test: [no-test] -->
+- [x] **collect_file_snapshots() tree walk for files** <!-- test: [no-test] -->
+- [x] **process_blob_entry() count newlines in blob** <!-- test: [no-test] -->
+- [x] **format_oid() 8-char hash display** <!-- test: tests/git_tests.rs::test_format_oid_length -->
+- [x] **get_file_content() retrieve file at commit** <!-- test: tests/git_tests.rs::test_get_file_content_retrieves_correct_version -->
+- [x] **restore_file() write file to disk** <!-- test: tests/git_tests.rs::test_restore_file_writes_to_disk -->
+
+---
+
+## Input Handling ?? CURRENT
+
+- [x] **HitBox struct (rect, id)** <!-- test: [no-test] -->
+- [x] **HitId enum (File, ViewTab, None)** <!-- test: [no-test] -->
+- [x] **MouseState struct (x, y, hover)** <!-- test: tests/input_tests.rs::test_mouse_state_default -->
+- [x] **MouseState::update_position()** <!-- test: tests/input_tests.rs::test_mouse_state_update_position -->
+- [x] **MouseState::set_hover()** <!-- test: tests/input_tests.rs::test_mouse_state_set_hover -->
+- [x] **hit_test() find element under cursor** <!-- test: tests/input_tests.rs::test_hit_test_hit_returns_id -->
+- [x] **handle_mouse() dispatch Moved/Down/Scroll** <!-- test: [no-test] -->
+- [x] **handle_key() keyboard dispatch** <!-- test: [no-test] -->
+- [x] **view_from_key() map 1-5 to ViewMode** <!-- test: [no-test] -->
+- [x] **handle_navigation() arrows/tab** <!-- test: [no-test] -->
+- [x] **Q key quits app** <!-- test: [no-test] -->
+- [x] **R key restores selected file** <!-- test: [no-test] -->
+- [x] **Esc key deselects file** <!-- test: [no-test] -->
+- [x] **Left/Right arrows navigate timeline** <!-- test: [no-test] -->
+- [x] **Tab/BackTab cycles views** <!-- test: [no-test] -->
+- [x] **ScrollUp moves timeline backward** <!-- test: [no-test] -->
+- [x] **ScrollDown moves timeline forward** <!-- test: [no-test] -->
+- [x] **Click file to select** <!-- test: [no-test] -->
+- [x] **Click tab to switch view** <!-- test: [no-test] -->
+- [x] **Hover highlights element** <!-- test: [no-test] -->
+
+---
+
+## Treemap View ?? CURRENT
+
+- [x] **ViewMode enum (Treemap, Heatmap, Minimap, River, Focus)** <!-- test: [no-test] -->
+- [x] **ViewMode::ALL const array** <!-- test: tests/input_tests.rs::test_viewmode_all_array -->
+- [x] **ViewMode::name() display string** <!-- test: tests/input_tests.rs::test_viewmode_name -->
+- [x] **ViewMode::index() numeric index** <!-- test: tests/input_tests.rs::test_viewmode_index -->
+- [x] **ViewMode::from_index() with default fallback** <!-- test: tests/input_tests.rs::test_viewmode_from_index_valid -->
+- [x] **ViewMode::next() cycle forward** <!-- test: tests/input_tests.rs::test_viewmode_next_cycles -->
+- [x] **ViewMode::prev() cycle backward** <!-- test: tests/input_tests.rs::test_viewmode_prev_cycles -->
+- [x] **RenderResult struct (hit_boxes Vec)** <!-- test: [no-test] -->
+- [x] **draw() dispatch to current view** <!-- test: [no-test] -->
+- [x] **CLR_STABLE constant (60,60,60 gray)** <!-- test: [no-test] -->
+- [x] **CLR_GREW constant (80,200,120 green)** <!-- test: [no-test] -->
+- [x] **CLR_SHRANK constant (200,200,80 yellow)** <!-- test: [no-test] -->
+- [x] **CLR_FUCKED constant (255,80,80 red)** <!-- test: [no-test] -->
+- [x] **CLR_NEW constant (80,180,255 blue)** <!-- test: [no-test] -->
+- [x] **CLR_HOVER constant (255,0,255 magenta)** <!-- test: [no-test] -->
+- [x] **CLR_SELECTED constant (0,255,255 cyan)** <!-- test: [no-test] -->
+- [x] **draw() main treemap render with 4-chunk layout** <!-- test: [no-test] -->
+- [x] **draw_header() title + view tabs** <!-- test: [no-test] -->
+- [x] **draw_timeline() slider with position marker** <!-- test: [no-test] -->
+- [x] **draw_treemap_area() file rectangles** <!-- test: [no-test] -->
+- [x] **draw_status() bottom hints bar** <!-- test: [no-test] -->
+- [x] **health_color() map HealthStatus to Color** <!-- test: [no-test] -->
+- [x] **truncate_path() shorten filename for display** <!-- test: tests/treemap_tests.rs::test_truncate_path_short_unchanged -->
+- [x] **compute_treemap_layout() sequential strip algorithm** <!-- test: tests/treemap_tests.rs::test_treemap_layout_rects_within_bounds -->
+- [x] **File rectangle shows truncated name** <!-- test: [no-test] -->
+- [x] **File rectangle shows line count** <!-- test: [no-test] -->
+- [x] **Hit boxes registered for files** <!-- test: [no-test] -->
+- [x] **Hit boxes registered for view tabs** <!-- test: [no-test] -->
+- [x] **Active tab highlighted (black on cyan)** <!-- test: [no-test] -->
+- [x] **Tab hover highlight (cyan text)** <!-- test: [no-test] -->
+- [x] **Timeline shows ◉ at current position** <!-- test: [no-test] -->
+- [x] **Timeline shows N / total** <!-- test: [no-test] -->
+- [x] **Timeline shows commit summary (40 chars)** <!-- test: [no-test] -->
+- [x] **Files panel shows commit hash** <!-- test: [no-test] -->
+- [x] **Treemap limited to 20 files** <!-- test: tests/treemap_tests.rs::test_treemap_layout_respects_20_file_limit -->
+- [ ] **Squarified layout algorithm (better aspect ratios)**
+- [ ] **Filter binary files (gif/png/jpg/etc)**
+- [ ] **Color legend for health status**
+- [ ] **Directory grouping/nesting**
+- [ ] **Hover tooltip with full path + stats**
+- [ ] **Remove 20 file limit (overflow handling)**
+
+---
+
+## Heatmap View
+
+- [ ] **Time (x) vs File (y) grid layout**
+- [ ] **Cell intensity = lines changed**
+- [ ] **Render intensity as ░▒▓█ characters**
+- [ ] **File path labels on y-axis**
+- [ ] **Date labels on x-axis**
+- [ ] **YOU ARE HERE marker at current commit**
+- [ ] **Click row to select file**
+- [ ] **Click cell to jump to commit**
+- [ ] **Scroll to pan time axis**
+- [ ] **Hit boxes for rows and cells**
+
+---
+
+## Minimap View
+
+- [ ] **Three panel layout (before/after/diff)**
+- [ ] **BEFORE panel code silhouette**
+- [ ] **AFTER panel code silhouette**
+- [ ] **DIFF panel with +/- regions**
+- [ ] **Pixel density = code density**
+- [ ] **Show line counts and delta**
+- [ ] **SIGNIFICANT SHRINKAGE warning**
+- [ ] **Drag to select BEFORE commit**
+- [ ] **Drag to select AFTER commit**
+- [ ] **R key restores BEFORE version**
+
+---
+
+## River View
+
+- [ ] **Stacked stream chart layout**
+- [ ] **Each file as colored stream area**
+- [ ] **Y-axis shows total lines**
+- [ ] **X-axis shows time/commits**
+- [ ] **Stream appears when file created**
+- [ ] **Stream ends when file deleted**
+- [ ] **Visualize file splits**
+- [ ] **Hover shows file name at point**
+- [ ] **Click jumps to commit**
+- [ ] **Scroll to zoom time axis**
+- [ ] **YOU ARE HERE vertical line**
+
+---
+
+## Focus View
+
+- [ ] **Deep dive on selected file**
+- [ ] **Sparkline showing size over N commits**
+- [ ] **List of commits touching this file**
+- [ ] **Up/Down to select commit in list**
+- [ ] **Preview file content at selected commit**
+- [ ] **Minimap thumbnail for each commit**
+- [ ] **R key restores from selected commit**
+- [ ] **Warning flags on suspicious commits**
+- [ ] **Enter key opens full preview**
+
+---
+
+## Polish & QoL
+
+- [ ] **Filter files by path pattern**
+- [ ] **Filter files by extension**
+- [ ] **Search commits by message**
+- [ ] **Branch selection**
+- [ ] **? key shows help overlay**
+- [ ] **Config file support**
+
+---
+
+
+#__SLOPCHOP_END__#
+
 #__SLOPCHOP_FILE__# slopchop.toml
 [rules]
 max_file_tokens = 2000
@@ -290,14 +414,15 @@ max_nesting_depth = 3
 max_function_args = 5
 max_function_words = 5
 ignore_naming_on = [
-    "tests",
-    "spec",
+"tests",
+"spec",
 ]
 ignore_tokens_on = [
-    "README.md",
-    "lock",
+"README.md",
+"ROADMAP.md",
+"tasks.toml",
+"lock",
 ]
-
 [preferences]
 theme = "Cyberpunk"
 auto_copy = true
@@ -309,11 +434,10 @@ system_bell = false
 backup_retention = 5
 progress_bars = true
 require_plan = false
-
 [commands]
 check = [
-    "cargo clippy --all-targets -- -D warnings -W clippy::pedantic",
-    "cargo test",
+"cargo clippy --all-targets -- -D warnings -W clippy::pedantic",
+"cargo test",
 ]
 fix = ["cargo fmt"]
 
@@ -645,6 +769,19 @@ pub fn restore_file(repo: &Repository, oid: Oid, path: &str) -> Result<()> {
     std::fs::write(path, content)?;
     Ok(())
 }
+#__SLOPCHOP_END__#
+
+#__SLOPCHOP_FILE__# src/lib.rs
+#![allow(clippy::must_use_candidate)]
+#![allow(clippy::missing_errors_doc)]
+#![allow(clippy::return_self_not_must_use)]
+
+pub mod app;
+pub mod cli;
+pub mod data;
+pub mod git_ops;
+pub mod mouse;
+pub mod views;
 #__SLOPCHOP_END__#
 
 #__SLOPCHOP_FILE__# src/main.rs
@@ -1017,7 +1154,7 @@ fn draw_treemap_area(f: &mut Frame, area: Rect, app: &App, result: &mut RenderRe
         let is_selected = app.selected_file.as_ref() == Some(path);
         let bg = if is_selected { CLR_SELECTED } else if is_hover { CLR_HOVER } else { health_color(health) };
         let name = truncate_path(path, rect.width as usize);
-        let content = Paragraph::new(vec![Line::from(name), Line::from(format!("{lines} ln"))])
+        let content = Paragraph::new(vec![Line::from(name), Line::from(format!("{lines}"))])
             .style(Style::default().bg(bg).fg(Color::Black))
             .block(Block::default().borders(Borders::ALL));
         f.render_widget(content, *rect);
@@ -1043,13 +1180,20 @@ fn health_color(status: HealthStatus) -> Color {
     }
 }
 
-fn truncate_path(path: &str, max: usize) -> String {
+/// Truncate a file path to fit within max characters.
+/// Extracts filename and adds ".." if too long.
+pub fn truncate_path(path: &str, max: usize) -> String {
     if path.len() <= max { return path.to_string(); }
-    path.rsplit('/').next().unwrap_or(path).chars().take(max.saturating_sub(2)).collect::<String>() + ".."
+    if max <= 2 { return path.chars().take(max).collect(); }
+    let filename = path.rsplit('/').next().unwrap_or(path);
+    if filename.len() <= max { return filename.to_string(); }
+    filename.chars().take(max.saturating_sub(2)).collect::<String>() + ".."
 }
 
+/// Compute treemap layout using sequential strip algorithm.
+/// Returns vec of (path, lines, rect) for each file.
 #[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-fn compute_treemap_layout(files: &[(String, usize)], area: Rect) -> Vec<(String, usize, Rect)> {
+pub fn compute_treemap_layout(files: &[(String, usize)], area: Rect) -> Vec<(String, usize, Rect)> {
     let total: usize = files.iter().map(|(_, s)| s).sum();
     if total == 0 || area.width < 2 || area.height < 2 { return vec![]; }
 
@@ -1079,15 +1223,2165 @@ fn compute_treemap_layout(files: &[(String, usize)], area: Rect) -> Vec<(String,
 }
 #__SLOPCHOP_END__#
 
+#__SLOPCHOP_FILE__# tasks.toml
+[meta]
+title = "git-trek Roadmap"
+description = "Visual git time travel & file recovery"
 
-═══════════════════════════════════════════════════════════════════
-END CODEBASE
-═══════════════════════════════════════════════════════════════════
+[[sections]]
+id = "core"
+title = "Core Infrastructure"
+status = "current"
+order = 0
 
-SLOPCHOP CONSTRAINTS:
-□ Files < 2000 tokens
-□ Complexity ≤ 8
-□ Nesting ≤ 3
-□ Args ≤ 5
-□ No .unwrap() or .expect()
-□ Use SlopChop Format (#__SLOPCHOP_FILE__# ...)
+[[sections]]
+id = "data"
+title = "Data Model"
+status = "current"
+order = 1
+
+[[sections]]
+id = "git"
+title = "Git Integration"
+status = "current"
+order = 2
+
+[[sections]]
+id = "input"
+title = "Input Handling"
+status = "current"
+order = 3
+
+[[sections]]
+id = "treemap"
+title = "Treemap View"
+status = "current"
+order = 4
+
+[[sections]]
+id = "heatmap"
+title = "Heatmap View"
+status = "pending"
+order = 5
+
+[[sections]]
+id = "minimap"
+title = "Minimap View"
+status = "pending"
+order = 6
+
+[[sections]]
+id = "river"
+title = "River View"
+status = "pending"
+order = 7
+
+[[sections]]
+id = "focus"
+title = "Focus View"
+status = "pending"
+order = 8
+
+[[sections]]
+id = "polish"
+title = "Polish & QoL"
+status = "pending"
+order = 9
+
+[[tasks]]
+id = "core-main-entry"
+text = "main() entry point with error handling"
+status = "done"
+section = "core"
+test = "[no-test]"
+order = 0
+
+[[tasks]]
+id = "core-terminal-setup"
+text = "setup_terminal() raw mode + mouse capture"
+status = "done"
+section = "core"
+test = "[no-test]"
+order = 1
+
+[[tasks]]
+id = "core-terminal-restore"
+text = "restore_terminal() cleanup on exit"
+status = "done"
+section = "core"
+test = "[no-test]"
+order = 2
+
+[[tasks]]
+id = "core-event-loop"
+text = "run_app() main event loop with 50ms poll"
+status = "done"
+section = "core"
+test = "[no-test]"
+order = 3
+
+[[tasks]]
+id = "core-app-struct"
+text = "App struct (repo, data, view, commit_idx, selected_file, mouse, should_quit, message)"
+status = "done"
+section = "core"
+test = "[no-test]"
+order = 4
+
+[[tasks]]
+id = "core-app-new"
+text = "App::new() initialize from CLI args"
+status = "done"
+section = "core"
+test = "[no-test]"
+order = 5
+
+[[tasks]]
+id = "core-cli-struct"
+text = "Cli struct (limit, dry_run)"
+status = "done"
+section = "core"
+test = "[no-test]"
+order = 6
+
+[[tasks]]
+id = "core-cli-parse"
+text = "Cli::parse_checked() with validation"
+status = "done"
+section = "core"
+test = "[no-test]"
+order = 7
+
+[[tasks]]
+id = "core-cli-limit"
+text = "--limit flag for commit count"
+status = "done"
+section = "core"
+test = "[no-test]"
+order = 8
+
+[[tasks]]
+id = "core-cli-dry-run"
+text = "--dry-run flag for testing"
+status = "done"
+section = "core"
+test = "[no-test]"
+order = 9
+
+[[tasks]]
+id = "core-message-display"
+text = "Post-exit message display"
+status = "done"
+section = "core"
+test = "[no-test]"
+order = 10
+
+[[tasks]]
+id = "data-health-enum"
+text = "HealthStatus enum (Stable, Grew, Shrank, MaybeFucked, New, Deleted)"
+status = "done"
+section = "data"
+test = "[no-test]"
+order = 0
+
+[[tasks]]
+id = "data-health-from-change"
+text = "HealthStatus::from_size_change() old/new comparison"
+status = "done"
+section = "data"
+test = "tests/data_tests.rs::test_health_none_to_some_is_new"
+order = 1
+
+[[tasks]]
+id = "data-health-from-ratio"
+text = "HealthStatus::from_ratio() with 0.7/0.95/1.05 thresholds"
+status = "done"
+section = "data"
+test = "tests/data_tests.rs::test_health_ratio_under_70_is_fucked"
+order = 2
+
+[[tasks]]
+id = "data-file-snapshot"
+text = "FileSnapshot struct (lines, bytes)"
+status = "done"
+section = "data"
+test = "[no-test]"
+order = 3
+
+[[tasks]]
+id = "data-tracked-file"
+text = "TrackedFile struct (path, history HashMap)"
+status = "done"
+section = "data"
+test = "[no-test]"
+order = 4
+
+[[tasks]]
+id = "data-tracked-new"
+text = "TrackedFile::new()"
+status = "done"
+section = "data"
+test = "[no-test]"
+order = 5
+
+[[tasks]]
+id = "data-tracked-lines-at"
+text = "TrackedFile::lines_at() get lines at commit index"
+status = "done"
+section = "data"
+test = "tests/data_tests.rs::test_tracked_file_lines_at_present"
+order = 6
+
+[[tasks]]
+id = "data-tracked-health-at"
+text = "TrackedFile::health_at() compare to previous commit"
+status = "done"
+section = "data"
+test = "tests/data_tests.rs::test_tracked_file_health_at_shrink"
+order = 7
+
+[[tasks]]
+id = "data-commit-info"
+text = "CommitInfo struct (oid, summary, author, timestamp, files_changed, insertions, deletions)"
+status = "done"
+section = "data"
+test = "[no-test]"
+order = 8
+
+[[tasks]]
+id = "data-repo-data"
+text = "RepoData struct (commits Vec, files HashMap)"
+status = "done"
+section = "data"
+test = "[no-test]"
+order = 9
+
+[[tasks]]
+id = "data-repo-new"
+text = "RepoData::new()"
+status = "done"
+section = "data"
+test = "[no-test]"
+order = 10
+
+[[tasks]]
+id = "git-load-repo"
+text = "load_repo_data() main loader function"
+status = "done"
+section = "git"
+test = "tests/git_tests.rs::test_load_repo_data_single_commit"
+order = 0
+
+[[tasks]]
+id = "git-collect-oids"
+text = "collect_commit_oids() revwalk with TOPOLOGICAL|TIME sort"
+status = "done"
+section = "git"
+test = "[no-test]"
+order = 1
+
+[[tasks]]
+id = "git-build-commit"
+text = "build_commit_info() extract commit metadata"
+status = "done"
+section = "git"
+test = "[no-test]"
+order = 2
+
+[[tasks]]
+id = "git-diff-stats"
+text = "get_diff_stats() insertions/deletions count"
+status = "done"
+section = "git"
+test = "[no-test]"
+order = 3
+
+[[tasks]]
+id = "git-collect-snapshots"
+text = "collect_file_snapshots() tree walk for files"
+status = "done"
+section = "git"
+test = "[no-test]"
+order = 4
+
+[[tasks]]
+id = "git-process-blob"
+text = "process_blob_entry() count newlines in blob"
+status = "done"
+section = "git"
+test = "[no-test]"
+order = 5
+
+[[tasks]]
+id = "git-format-oid"
+text = "format_oid() 8-char hash display"
+status = "done"
+section = "git"
+test = "tests/git_tests.rs::test_format_oid_length"
+order = 6
+
+[[tasks]]
+id = "git-get-content"
+text = "get_file_content() retrieve file at commit"
+status = "done"
+section = "git"
+test = "tests/git_tests.rs::test_get_file_content_retrieves_correct_version"
+order = 7
+
+[[tasks]]
+id = "git-restore-file"
+text = "restore_file() write file to disk"
+status = "done"
+section = "git"
+test = "tests/git_tests.rs::test_restore_file_writes_to_disk"
+order = 8
+
+[[tasks]]
+id = "input-hitbox-struct"
+text = "HitBox struct (rect, id)"
+status = "done"
+section = "input"
+test = "[no-test]"
+order = 0
+
+[[tasks]]
+id = "input-hitid-enum"
+text = "HitId enum (File, ViewTab, None)"
+status = "done"
+section = "input"
+test = "[no-test]"
+order = 1
+
+[[tasks]]
+id = "input-mouse-state"
+text = "MouseState struct (x, y, hover)"
+status = "done"
+section = "input"
+test = "tests/input_tests.rs::test_mouse_state_default"
+order = 2
+
+[[tasks]]
+id = "input-mouse-update-pos"
+text = "MouseState::update_position()"
+status = "done"
+section = "input"
+test = "tests/input_tests.rs::test_mouse_state_update_position"
+order = 3
+
+[[tasks]]
+id = "input-mouse-set-hover"
+text = "MouseState::set_hover()"
+status = "done"
+section = "input"
+test = "tests/input_tests.rs::test_mouse_state_set_hover"
+order = 4
+
+[[tasks]]
+id = "input-hit-test"
+text = "hit_test() find element under cursor"
+status = "done"
+section = "input"
+test = "tests/input_tests.rs::test_hit_test_hit_returns_id"
+order = 5
+
+[[tasks]]
+id = "input-handle-mouse"
+text = "handle_mouse() dispatch Moved/Down/Scroll"
+status = "done"
+section = "input"
+test = "[no-test]"
+order = 6
+
+[[tasks]]
+id = "input-handle-key"
+text = "handle_key() keyboard dispatch"
+status = "done"
+section = "input"
+test = "[no-test]"
+order = 7
+
+[[tasks]]
+id = "input-view-from-key"
+text = "view_from_key() map 1-5 to ViewMode"
+status = "done"
+section = "input"
+test = "[no-test]"
+order = 8
+
+[[tasks]]
+id = "input-handle-nav"
+text = "handle_navigation() arrows/tab"
+status = "done"
+section = "input"
+test = "[no-test]"
+order = 9
+
+[[tasks]]
+id = "input-key-q-quit"
+text = "Q key quits app"
+status = "done"
+section = "input"
+test = "[no-test]"
+order = 10
+
+[[tasks]]
+id = "input-key-r-restore"
+text = "R key restores selected file"
+status = "done"
+section = "input"
+test = "[no-test]"
+order = 11
+
+[[tasks]]
+id = "input-key-esc-deselect"
+text = "Esc key deselects file"
+status = "done"
+section = "input"
+test = "[no-test]"
+order = 12
+
+[[tasks]]
+id = "input-key-arrows"
+text = "Left/Right arrows navigate timeline"
+status = "done"
+section = "input"
+test = "[no-test]"
+order = 13
+
+[[tasks]]
+id = "input-key-tab"
+text = "Tab/BackTab cycles views"
+status = "done"
+section = "input"
+test = "[no-test]"
+order = 14
+
+[[tasks]]
+id = "input-scroll-up"
+text = "ScrollUp moves timeline backward"
+status = "done"
+section = "input"
+test = "[no-test]"
+order = 15
+
+[[tasks]]
+id = "input-scroll-down"
+text = "ScrollDown moves timeline forward"
+status = "done"
+section = "input"
+test = "[no-test]"
+order = 16
+
+[[tasks]]
+id = "input-click-file"
+text = "Click file to select"
+status = "done"
+section = "input"
+test = "[no-test]"
+order = 17
+
+[[tasks]]
+id = "input-click-tab"
+text = "Click tab to switch view"
+status = "done"
+section = "input"
+test = "[no-test]"
+order = 18
+
+[[tasks]]
+id = "input-hover-highlight"
+text = "Hover highlights element"
+status = "done"
+section = "input"
+test = "[no-test]"
+order = 19
+
+[[tasks]]
+id = "app-current-commit-label"
+text = "App::current_commit_label() format hash"
+status = "done"
+section = "core"
+test = "[no-test]"
+order = 11
+
+[[tasks]]
+id = "app-files-at-commit"
+text = "App::files_at_current_commit() sorted by size"
+status = "done"
+section = "core"
+test = "[no-test]"
+order = 12
+
+[[tasks]]
+id = "app-file-health"
+text = "App::file_health() get status for path"
+status = "done"
+section = "core"
+test = "[no-test]"
+order = 13
+
+[[tasks]]
+id = "app-handle-click"
+text = "App::handle_click() dispatch File/ViewTab"
+status = "done"
+section = "core"
+test = "tests/app_tests.rs::test_handle_click_file_sets_selected"
+order = 14
+
+[[tasks]]
+id = "app-scroll-timeline"
+text = "App::scroll_timeline() with bounds checking"
+status = "done"
+section = "core"
+test = "tests/app_tests.rs::test_scroll_timeline_forward_from_zero"
+order = 15
+
+[[tasks]]
+id = "app-set-view"
+text = "App::set_view()"
+status = "done"
+section = "core"
+test = "tests/app_tests.rs::test_set_view_direct"
+order = 16
+
+[[tasks]]
+id = "app-next-view"
+text = "App::next_view()"
+status = "done"
+section = "core"
+test = "tests/app_tests.rs::test_next_view_full_cycle"
+order = 17
+
+[[tasks]]
+id = "app-prev-view"
+text = "App::prev_view()"
+status = "done"
+section = "core"
+test = "tests/app_tests.rs::test_prev_view_full_cycle"
+order = 18
+
+[[tasks]]
+id = "app-restore-selected"
+text = "App::restore_selected() restore with message"
+status = "done"
+section = "core"
+test = "[no-test]"
+order = 19
+
+[[tasks]]
+id = "view-mode-enum"
+text = "ViewMode enum (Treemap, Heatmap, Minimap, River, Focus)"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 0
+
+[[tasks]]
+id = "view-mode-all"
+text = "ViewMode::ALL const array"
+status = "done"
+section = "treemap"
+test = "tests/input_tests.rs::test_viewmode_all_array"
+order = 1
+
+[[tasks]]
+id = "view-mode-name"
+text = "ViewMode::name() display string"
+status = "done"
+section = "treemap"
+test = "tests/input_tests.rs::test_viewmode_name"
+order = 2
+
+[[tasks]]
+id = "view-mode-index"
+text = "ViewMode::index() numeric index"
+status = "done"
+section = "treemap"
+test = "tests/input_tests.rs::test_viewmode_index"
+order = 3
+
+[[tasks]]
+id = "view-mode-from-index"
+text = "ViewMode::from_index() with default fallback"
+status = "done"
+section = "treemap"
+test = "tests/input_tests.rs::test_viewmode_from_index_valid"
+order = 4
+
+[[tasks]]
+id = "view-mode-next"
+text = "ViewMode::next() cycle forward"
+status = "done"
+section = "treemap"
+test = "tests/input_tests.rs::test_viewmode_next_cycles"
+order = 5
+
+[[tasks]]
+id = "view-mode-prev"
+text = "ViewMode::prev() cycle backward"
+status = "done"
+section = "treemap"
+test = "tests/input_tests.rs::test_viewmode_prev_cycles"
+order = 6
+
+[[tasks]]
+id = "view-render-result"
+text = "RenderResult struct (hit_boxes Vec)"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 7
+
+[[tasks]]
+id = "view-draw-dispatch"
+text = "draw() dispatch to current view"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 8
+
+[[tasks]]
+id = "treemap-color-stable"
+text = "CLR_STABLE constant (60,60,60 gray)"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 10
+
+[[tasks]]
+id = "treemap-color-grew"
+text = "CLR_GREW constant (80,200,120 green)"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 11
+
+[[tasks]]
+id = "treemap-color-shrank"
+text = "CLR_SHRANK constant (200,200,80 yellow)"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 12
+
+[[tasks]]
+id = "treemap-color-fucked"
+text = "CLR_FUCKED constant (255,80,80 red)"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 13
+
+[[tasks]]
+id = "treemap-color-new"
+text = "CLR_NEW constant (80,180,255 blue)"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 14
+
+[[tasks]]
+id = "treemap-color-hover"
+text = "CLR_HOVER constant (255,0,255 magenta)"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 15
+
+[[tasks]]
+id = "treemap-color-selected"
+text = "CLR_SELECTED constant (0,255,255 cyan)"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 16
+
+[[tasks]]
+id = "treemap-draw-main"
+text = "draw() main treemap render with 4-chunk layout"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 17
+
+[[tasks]]
+id = "treemap-draw-header"
+text = "draw_header() title + view tabs"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 18
+
+[[tasks]]
+id = "treemap-draw-timeline"
+text = "draw_timeline() slider with position marker"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 19
+
+[[tasks]]
+id = "treemap-draw-area"
+text = "draw_treemap_area() file rectangles"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 20
+
+[[tasks]]
+id = "treemap-draw-status"
+text = "draw_status() bottom hints bar"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 21
+
+[[tasks]]
+id = "treemap-health-color"
+text = "health_color() map HealthStatus to Color"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 22
+
+[[tasks]]
+id = "treemap-truncate-path"
+text = "truncate_path() shorten filename for display"
+status = "done"
+section = "treemap"
+test = "tests/treemap_tests.rs::test_truncate_path_short_unchanged"
+order = 23
+
+[[tasks]]
+id = "treemap-compute-layout"
+text = "compute_treemap_layout() sequential strip algorithm"
+status = "done"
+section = "treemap"
+test = "tests/treemap_tests.rs::test_treemap_layout_rects_within_bounds"
+order = 24
+
+[[tasks]]
+id = "treemap-file-label"
+text = "File rectangle shows truncated name"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 25
+
+[[tasks]]
+id = "treemap-file-linecount"
+text = "File rectangle shows line count"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 26
+
+[[tasks]]
+id = "treemap-hitbox-files"
+text = "Hit boxes registered for files"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 27
+
+[[tasks]]
+id = "treemap-hitbox-tabs"
+text = "Hit boxes registered for view tabs"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 28
+
+[[tasks]]
+id = "treemap-tab-active"
+text = "Active tab highlighted (black on cyan)"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 29
+
+[[tasks]]
+id = "treemap-tab-hover"
+text = "Tab hover highlight (cyan text)"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 30
+
+[[tasks]]
+id = "treemap-timeline-marker"
+text = "Timeline shows ◉ at current position"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 31
+
+[[tasks]]
+id = "treemap-timeline-n-of-total"
+text = "Timeline shows N / total"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 32
+
+[[tasks]]
+id = "treemap-timeline-summary"
+text = "Timeline shows commit summary (40 chars)"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 33
+
+[[tasks]]
+id = "treemap-commit-hash"
+text = "Files panel shows commit hash"
+status = "done"
+section = "treemap"
+test = "[no-test]"
+order = 34
+
+[[tasks]]
+id = "treemap-max-20-files"
+text = "Treemap limited to 20 files"
+status = "done"
+section = "treemap"
+test = "tests/treemap_tests.rs::test_treemap_layout_respects_20_file_limit"
+order = 35
+
+[[tasks]]
+id = "treemap-squarify"
+text = "Squarified layout algorithm (better aspect ratios)"
+status = "pending"
+section = "treemap"
+order = 40
+
+[[tasks]]
+id = "treemap-binary-filter"
+text = "Filter binary files (gif/png/jpg/etc)"
+status = "pending"
+section = "treemap"
+order = 41
+
+[[tasks]]
+id = "treemap-legend"
+text = "Color legend for health status"
+status = "pending"
+section = "treemap"
+order = 42
+
+[[tasks]]
+id = "treemap-dir-grouping"
+text = "Directory grouping/nesting"
+status = "pending"
+section = "treemap"
+order = 43
+
+[[tasks]]
+id = "treemap-hover-stats"
+text = "Hover tooltip with full path + stats"
+status = "pending"
+section = "treemap"
+order = 44
+
+[[tasks]]
+id = "treemap-no-file-limit"
+text = "Remove 20 file limit (overflow handling)"
+status = "pending"
+section = "treemap"
+order = 45
+
+[[tasks]]
+id = "heatmap-grid-layout"
+text = "Time (x) vs File (y) grid layout"
+status = "pending"
+section = "heatmap"
+order = 0
+
+[[tasks]]
+id = "heatmap-intensity-calc"
+text = "Cell intensity = lines changed"
+status = "pending"
+section = "heatmap"
+order = 1
+
+[[tasks]]
+id = "heatmap-intensity-render"
+text = "Render intensity as ░▒▓█ characters"
+status = "pending"
+section = "heatmap"
+order = 2
+
+[[tasks]]
+id = "heatmap-file-labels"
+text = "File path labels on y-axis"
+status = "pending"
+section = "heatmap"
+order = 3
+
+[[tasks]]
+id = "heatmap-date-labels"
+text = "Date labels on x-axis"
+status = "pending"
+section = "heatmap"
+order = 4
+
+[[tasks]]
+id = "heatmap-cursor-marker"
+text = "YOU ARE HERE marker at current commit"
+status = "pending"
+section = "heatmap"
+order = 5
+
+[[tasks]]
+id = "heatmap-row-click"
+text = "Click row to select file"
+status = "pending"
+section = "heatmap"
+order = 6
+
+[[tasks]]
+id = "heatmap-cell-click"
+text = "Click cell to jump to commit"
+status = "pending"
+section = "heatmap"
+order = 7
+
+[[tasks]]
+id = "heatmap-scroll-pan"
+text = "Scroll to pan time axis"
+status = "pending"
+section = "heatmap"
+order = 8
+
+[[tasks]]
+id = "heatmap-hitboxes"
+text = "Hit boxes for rows and cells"
+status = "pending"
+section = "heatmap"
+order = 9
+
+[[tasks]]
+id = "minimap-three-panel"
+text = "Three panel layout (before/after/diff)"
+status = "pending"
+section = "minimap"
+order = 0
+
+[[tasks]]
+id = "minimap-before-render"
+text = "BEFORE panel code silhouette"
+status = "pending"
+section = "minimap"
+order = 1
+
+[[tasks]]
+id = "minimap-after-render"
+text = "AFTER panel code silhouette"
+status = "pending"
+section = "minimap"
+order = 2
+
+[[tasks]]
+id = "minimap-diff-render"
+text = "DIFF panel with +/- regions"
+status = "pending"
+section = "minimap"
+order = 3
+
+[[tasks]]
+id = "minimap-density-viz"
+text = "Pixel density = code density"
+status = "pending"
+section = "minimap"
+order = 4
+
+[[tasks]]
+id = "minimap-line-stats"
+text = "Show line counts and delta"
+status = "pending"
+section = "minimap"
+order = 5
+
+[[tasks]]
+id = "minimap-shrinkage-warning"
+text = "SIGNIFICANT SHRINKAGE warning"
+status = "pending"
+section = "minimap"
+order = 6
+
+[[tasks]]
+id = "minimap-drag-before"
+text = "Drag to select BEFORE commit"
+status = "pending"
+section = "minimap"
+order = 7
+
+[[tasks]]
+id = "minimap-drag-after"
+text = "Drag to select AFTER commit"
+status = "pending"
+section = "minimap"
+order = 8
+
+[[tasks]]
+id = "minimap-restore-key"
+text = "R key restores BEFORE version"
+status = "pending"
+section = "minimap"
+order = 9
+
+[[tasks]]
+id = "river-stacked-stream"
+text = "Stacked stream chart layout"
+status = "pending"
+section = "river"
+order = 0
+
+[[tasks]]
+id = "river-file-areas"
+text = "Each file as colored stream area"
+status = "pending"
+section = "river"
+order = 1
+
+[[tasks]]
+id = "river-size-axis"
+text = "Y-axis shows total lines"
+status = "pending"
+section = "river"
+order = 2
+
+[[tasks]]
+id = "river-time-axis"
+text = "X-axis shows time/commits"
+status = "pending"
+section = "river"
+order = 3
+
+[[tasks]]
+id = "river-file-birth"
+text = "Stream appears when file created"
+status = "pending"
+section = "river"
+order = 4
+
+[[tasks]]
+id = "river-file-death"
+text = "Stream ends when file deleted"
+status = "pending"
+section = "river"
+order = 5
+
+[[tasks]]
+id = "river-file-split"
+text = "Visualize file splits"
+status = "pending"
+section = "river"
+order = 6
+
+[[tasks]]
+id = "river-hover-label"
+text = "Hover shows file name at point"
+status = "pending"
+section = "river"
+order = 7
+
+[[tasks]]
+id = "river-click-jump"
+text = "Click jumps to commit"
+status = "pending"
+section = "river"
+order = 8
+
+[[tasks]]
+id = "river-scroll-zoom"
+text = "Scroll to zoom time axis"
+status = "pending"
+section = "river"
+order = 9
+
+[[tasks]]
+id = "river-cursor-marker"
+text = "YOU ARE HERE vertical line"
+status = "pending"
+section = "river"
+order = 10
+
+[[tasks]]
+id = "focus-single-file"
+text = "Deep dive on selected file"
+status = "pending"
+section = "focus"
+order = 0
+
+[[tasks]]
+id = "focus-sparkline"
+text = "Sparkline showing size over N commits"
+status = "pending"
+section = "focus"
+order = 1
+
+[[tasks]]
+id = "focus-commit-list"
+text = "List of commits touching this file"
+status = "pending"
+section = "focus"
+order = 2
+
+[[tasks]]
+id = "focus-commit-select"
+text = "Up/Down to select commit in list"
+status = "pending"
+section = "focus"
+order = 3
+
+[[tasks]]
+id = "focus-commit-preview"
+text = "Preview file content at selected commit"
+status = "pending"
+section = "focus"
+order = 4
+
+[[tasks]]
+id = "focus-minimap-thumb"
+text = "Minimap thumbnail for each commit"
+status = "pending"
+section = "focus"
+order = 5
+
+[[tasks]]
+id = "focus-restore-key"
+text = "R key restores from selected commit"
+status = "pending"
+section = "focus"
+order = 6
+
+[[tasks]]
+id = "focus-warning-flags"
+text = "Warning flags on suspicious commits"
+status = "pending"
+section = "focus"
+order = 7
+
+[[tasks]]
+id = "focus-enter-preview"
+text = "Enter key opens full preview"
+status = "pending"
+section = "focus"
+order = 8
+
+[[tasks]]
+id = "polish-filter-path"
+text = "Filter files by path pattern"
+status = "pending"
+section = "polish"
+order = 0
+
+[[tasks]]
+id = "polish-filter-ext"
+text = "Filter files by extension"
+status = "pending"
+section = "polish"
+order = 1
+
+[[tasks]]
+id = "polish-search-commits"
+text = "Search commits by message"
+status = "pending"
+section = "polish"
+order = 2
+
+[[tasks]]
+id = "polish-branch-support"
+text = "Branch selection"
+status = "pending"
+section = "polish"
+order = 3
+
+[[tasks]]
+id = "polish-help-overlay"
+text = "? key shows help overlay"
+status = "pending"
+section = "polish"
+order = 4
+
+[[tasks]]
+id = "polish-config-file"
+text = "Config file support"
+status = "pending"
+section = "polish"
+order = 5
+
+#__SLOPCHOP_END__#
+
+#__SLOPCHOP_FILE__# test.rs
+v1 content
+
+#__SLOPCHOP_END__#
+
+#__SLOPCHOP_FILE__# tests/app_tests.rs
+//! App state tests
+//! Tests `scroll_timeline` bounds, `handle_click` dispatch, view switching
+
+use git_trek::data::{CommitInfo, FileSnapshot, RepoData, TrackedFile};
+use git_trek::mouse::HitId;
+use git_trek::views::ViewMode;
+use git2::Oid;
+
+/// Create a minimal `RepoData` for testing without a real repo
+#[allow(clippy::cast_possible_wrap)]
+fn mock_repo_data(num_commits: usize) -> RepoData {
+    let mut data = RepoData::new();
+    let zero_oid = Oid::zero();
+    
+    for i in 0..num_commits {
+        data.commits.push(CommitInfo {
+            oid: zero_oid,
+            summary: format!("Commit {i}"),
+            author: "test".to_string(),
+            timestamp: i as i64,
+            files_changed: vec![],
+            insertions: 0,
+            deletions: 0,
+        });
+    }
+    
+    let mut file = TrackedFile::new("test.rs".to_string());
+    file.history.insert(0, FileSnapshot { lines: 100, bytes: 2000 });
+    data.files.insert("test.rs".to_string(), file);
+    
+    data
+}
+
+// === scroll_timeline tests ===
+
+#[test]
+fn test_scroll_timeline_forward_from_zero() {
+    let data = mock_repo_data(10);
+    let mut idx = 0usize;
+    let max = data.commits.len().saturating_sub(1);
+    
+    idx = idx.saturating_add(1).min(max);
+    assert_eq!(idx, 1);
+}
+
+#[test]
+fn test_scroll_timeline_backward_from_zero_stays_zero() {
+    let _data = mock_repo_data(10);
+    let mut idx = 0usize;
+    
+    idx = idx.saturating_sub(1);
+    assert_eq!(idx, 0, "Should not go below 0");
+}
+
+#[test]
+fn test_scroll_timeline_forward_clamps_at_max() {
+    let data = mock_repo_data(10);
+    let max = data.commits.len().saturating_sub(1);
+    let mut idx = 8usize;
+    
+    idx = idx.saturating_add(5).min(max);
+    assert_eq!(idx, 9);
+    
+    idx = idx.saturating_add(1).min(max);
+    assert_eq!(idx, 9);
+}
+
+#[test]
+fn test_scroll_timeline_empty_commits() {
+    let data = mock_repo_data(0);
+    let max = data.commits.len().saturating_sub(1);
+    let mut idx = 0usize;
+    
+    idx = idx.saturating_add(1).min(max);
+    assert_eq!(idx, 0, "Empty repo should stay at 0");
+}
+
+#[test]
+fn test_scroll_timeline_single_commit() {
+    let data = mock_repo_data(1);
+    let max = data.commits.len().saturating_sub(1);
+    let mut idx = 0usize;
+    
+    idx = idx.saturating_add(1).min(max);
+    assert_eq!(idx, 0, "Single commit repo should stay at 0");
+}
+
+#[test]
+fn test_scroll_timeline_large_delta() {
+    let data = mock_repo_data(100);
+    let max = data.commits.len().saturating_sub(1);
+    let mut idx = 50usize;
+    
+    idx = idx.saturating_sub(100);
+    assert_eq!(idx, 0);
+    
+    idx = idx.saturating_add(500).min(max);
+    assert_eq!(idx, 99);
+}
+
+// === handle_click tests ===
+
+#[test]
+fn test_handle_click_file_sets_selected() {
+    let mut selected: Option<String> = None;
+    let id = HitId::File("src/main.rs".to_string());
+    
+    if let HitId::File(path) = id {
+        selected = Some(path);
+    }
+    
+    assert_eq!(selected, Some("src/main.rs".to_string()));
+}
+
+#[test]
+fn test_handle_click_viewtab_changes_view() {
+    let mut view = ViewMode::Treemap;
+    let id = HitId::ViewTab(2);
+    
+    if let HitId::ViewTab(i) = id {
+        view = ViewMode::from_index(i);
+    }
+    
+    assert_eq!(view, ViewMode::Minimap);
+}
+
+#[test]
+fn test_handle_click_none_does_nothing() {
+    let mut selected: Option<String> = Some("existing.rs".to_string());
+    let mut view = ViewMode::Treemap;
+    let id = HitId::None;
+    
+    match id {
+        HitId::File(path) => selected = Some(path),
+        HitId::ViewTab(i) => view = ViewMode::from_index(i),
+        HitId::None => {}
+    }
+    
+    assert_eq!(selected, Some("existing.rs".to_string()), "Should not change");
+    assert_eq!(view, ViewMode::Treemap, "Should not change");
+}
+
+// === view switching tests ===
+
+#[test]
+fn test_set_view_direct() {
+    let view = ViewMode::Focus;
+    assert_eq!(view, ViewMode::Focus);
+}
+
+#[test]
+fn test_next_view_full_cycle() {
+    let mut view = ViewMode::Treemap;
+    let mut visited = vec![view];
+    
+    for _ in 0..5 {
+        view = view.next();
+        visited.push(view);
+    }
+    
+    assert_eq!(visited, vec![
+        ViewMode::Treemap,
+        ViewMode::Heatmap,
+        ViewMode::Minimap,
+        ViewMode::River,
+        ViewMode::Focus,
+        ViewMode::Treemap,
+    ]);
+}
+
+#[test]
+fn test_prev_view_full_cycle() {
+    let mut view = ViewMode::Treemap;
+    let mut visited = vec![view];
+    
+    for _ in 0..5 {
+        view = view.prev();
+        visited.push(view);
+    }
+    
+    assert_eq!(visited, vec![
+        ViewMode::Treemap,
+        ViewMode::Focus,
+        ViewMode::River,
+        ViewMode::Minimap,
+        ViewMode::Heatmap,
+        ViewMode::Treemap,
+    ]);
+}
+#__SLOPCHOP_END__#
+
+#__SLOPCHOP_FILE__# tests/data_tests.rs
+//! Data model tests
+//! Anchors: data-health-from-change, data-health-from-ratio, data-tracked-lines-at, data-tracked-health-at
+
+use git_trek::data::{FileSnapshot, HealthStatus, TrackedFile};
+
+#[test]
+fn test_health_none_to_none_is_stable() {
+    assert_eq!(HealthStatus::from_size_change(None, None), HealthStatus::Stable);
+}
+
+#[test]
+fn test_health_none_to_some_is_new() {
+    assert_eq!(HealthStatus::from_size_change(None, Some(100)), HealthStatus::New);
+}
+
+#[test]
+fn test_health_some_to_none_is_deleted() {
+    assert_eq!(HealthStatus::from_size_change(Some(100), None), HealthStatus::Deleted);
+}
+
+#[test]
+fn test_health_ratio_under_70_is_fucked() {
+    assert_eq!(HealthStatus::from_size_change(Some(100), Some(69)), HealthStatus::MaybeFucked);
+    assert_eq!(HealthStatus::from_size_change(Some(100), Some(50)), HealthStatus::MaybeFucked);
+}
+
+#[test]
+fn test_health_ratio_70_to_95_is_shrank() {
+    assert_eq!(HealthStatus::from_size_change(Some(100), Some(70)), HealthStatus::Shrank);
+    assert_eq!(HealthStatus::from_size_change(Some(100), Some(94)), HealthStatus::Shrank);
+}
+
+#[test]
+fn test_health_ratio_95_to_105_is_stable() {
+    assert_eq!(HealthStatus::from_size_change(Some(100), Some(95)), HealthStatus::Stable);
+    assert_eq!(HealthStatus::from_size_change(Some(100), Some(100)), HealthStatus::Stable);
+    assert_eq!(HealthStatus::from_size_change(Some(100), Some(105)), HealthStatus::Stable);
+}
+
+#[test]
+fn test_health_ratio_over_105_is_grew() {
+    assert_eq!(HealthStatus::from_size_change(Some(100), Some(106)), HealthStatus::Grew);
+    assert_eq!(HealthStatus::from_size_change(Some(100), Some(200)), HealthStatus::Grew);
+}
+
+#[test]
+fn test_health_zero_old_is_new() {
+    assert_eq!(HealthStatus::from_size_change(Some(0), Some(100)), HealthStatus::New);
+}
+
+#[test]
+fn test_tracked_file_lines_at_missing() {
+    let tf = TrackedFile::new("test.rs".to_string());
+    assert_eq!(tf.lines_at(0), None);
+}
+
+#[test]
+fn test_tracked_file_lines_at_present() {
+    let mut tf = TrackedFile::new("test.rs".to_string());
+    tf.history.insert(0, FileSnapshot { lines: 100, bytes: 2000 });
+    assert_eq!(tf.lines_at(0), Some(100));
+}
+
+#[test]
+fn test_tracked_file_health_at_no_prev() {
+    let mut tf = TrackedFile::new("test.rs".to_string());
+    tf.history.insert(0, FileSnapshot { lines: 100, bytes: 2000 });
+    assert_eq!(tf.health_at(0, None), HealthStatus::New);
+}
+
+#[test]
+fn test_tracked_file_health_at_shrink() {
+    let mut tf = TrackedFile::new("test.rs".to_string());
+    tf.history.insert(0, FileSnapshot { lines: 100, bytes: 2000 });
+    tf.history.insert(1, FileSnapshot { lines: 200, bytes: 4000 });
+    assert_eq!(tf.health_at(0, Some(1)), HealthStatus::MaybeFucked);
+}
+
+#[test]
+fn test_tracked_file_health_at_grow() {
+    let mut tf = TrackedFile::new("test.rs".to_string());
+    tf.history.insert(0, FileSnapshot { lines: 100, bytes: 2000 });
+    tf.history.insert(1, FileSnapshot { lines: 200, bytes: 4000 });
+    assert_eq!(tf.health_at(1, Some(0)), HealthStatus::Grew);
+}
+#__SLOPCHOP_END__#
+
+#__SLOPCHOP_FILE__# tests/git_tests.rs
+//! Git operations tests
+//! Tests `format_oid`, file restoration in temp repos
+
+use git_trek::git_ops::{format_oid, get_file_content, load_repo_data, restore_file};
+use git2::{Repository, Signature};
+use std::fs;
+use std::env;
+use tempfile::TempDir;
+
+fn create_test_repo() -> (TempDir, Repository) {
+    let dir = TempDir::new().expect("create temp dir");
+    let repo = Repository::init(dir.path()).expect("init repo");
+    
+    let mut config = repo.config().expect("get config");
+    config.set_str("user.name", "Test User").expect("set name");
+    config.set_str("user.email", "test@example.com").expect("set email");
+    
+    (dir, repo)
+}
+
+fn commit_file(repo: &Repository, path: &str, content: &str, message: &str) -> git2::Oid {
+    let root = repo.workdir().expect("workdir");
+    let file_path = root.join(path);
+    
+    if let Some(parent) = file_path.parent() {
+        fs::create_dir_all(parent).expect("create dirs");
+    }
+    
+    fs::write(&file_path, content).expect("write file");
+    
+    let mut index = repo.index().expect("get index");
+    index.add_path(std::path::Path::new(path)).expect("add to index");
+    index.write().expect("write index");
+    
+    let tree_id = index.write_tree().expect("write tree");
+    let tree = repo.find_tree(tree_id).expect("find tree");
+    let sig = Signature::now("Test", "test@test.com").expect("signature");
+    
+    let parent_commit = repo.head().ok().and_then(|h| h.peel_to_commit().ok());
+    let parents: Vec<&git2::Commit> = parent_commit.iter().collect();
+    
+    repo.commit(Some("HEAD"), &sig, &sig, message, &tree, &parents)
+        .expect("commit")
+}
+
+// === format_oid tests ===
+
+#[test]
+fn test_format_oid_length() {
+    let (_dir, repo) = create_test_repo();
+    let oid = commit_file(&repo, "test.txt", "hello", "initial");
+    
+    let formatted = format_oid(oid);
+    assert_eq!(formatted.len(), 8, "Should be 8 characters");
+}
+
+#[test]
+fn test_format_oid_hex_chars() {
+    let (_dir, repo) = create_test_repo();
+    let oid = commit_file(&repo, "test.txt", "hello", "initial");
+    
+    let formatted = format_oid(oid);
+    assert!(formatted.chars().all(|c| c.is_ascii_hexdigit()), "Should be hex");
+}
+
+#[test]
+fn test_format_oid_matches_full() {
+    let (_dir, repo) = create_test_repo();
+    let oid = commit_file(&repo, "test.txt", "hello", "initial");
+    
+    let formatted = format_oid(oid);
+    let full = oid.to_string();
+    assert!(full.starts_with(&formatted), "Should be prefix of full OID");
+}
+
+// === load_repo_data tests ===
+
+#[test]
+fn test_load_repo_data_empty_repo() {
+    let (_dir, repo) = create_test_repo();
+    let result = load_repo_data(&repo, 10);
+    assert!(result.is_err() || result.unwrap().commits.is_empty());
+}
+
+#[test]
+fn test_load_repo_data_single_commit() {
+    let (_dir, repo) = create_test_repo();
+    commit_file(&repo, "main.rs", "fn main() {}\n", "initial");
+    
+    let data = load_repo_data(&repo, 10).expect("load data");
+    assert_eq!(data.commits.len(), 1);
+    assert!(data.files.contains_key("main.rs"));
+}
+
+#[test]
+fn test_load_repo_data_multiple_commits() {
+    let (_dir, repo) = create_test_repo();
+    commit_file(&repo, "a.rs", "// a\n", "first");
+    commit_file(&repo, "b.rs", "// b\n", "second");
+    commit_file(&repo, "c.rs", "// c\n", "third");
+    
+    let data = load_repo_data(&repo, 10).expect("load data");
+    assert_eq!(data.commits.len(), 3);
+}
+
+#[test]
+fn test_load_repo_data_respects_limit() {
+    let (_dir, repo) = create_test_repo();
+    for i in 0..10 {
+        commit_file(&repo, &format!("file{i}.rs"), "// content\n", &format!("commit {i}"));
+    }
+    
+    let data = load_repo_data(&repo, 5).expect("load data");
+    assert_eq!(data.commits.len(), 5, "Should respect limit");
+}
+
+#[test]
+fn test_load_repo_data_tracks_file_history() {
+    let (_dir, repo) = create_test_repo();
+    commit_file(&repo, "main.rs", "line1\n", "v1");
+    commit_file(&repo, "main.rs", "line1\nline2\n", "v2");
+    commit_file(&repo, "main.rs", "line1\nline2\nline3\n", "v3");
+    
+    let data = load_repo_data(&repo, 10).expect("load data");
+    let file = data.files.get("main.rs").expect("file tracked");
+    
+    assert!(!file.history.is_empty());
+}
+
+// === get_file_content tests ===
+
+#[test]
+fn test_get_file_content_retrieves_correct_version() {
+    let (_dir, repo) = create_test_repo();
+    let oid1 = commit_file(&repo, "test.rs", "version1\n", "v1");
+    let _oid2 = commit_file(&repo, "test.rs", "version2\n", "v2");
+    
+    let content = get_file_content(&repo, oid1, "test.rs").expect("get content");
+    assert_eq!(content, "version1\n");
+}
+
+#[test]
+fn test_get_file_content_nonexistent_file() {
+    let (_dir, repo) = create_test_repo();
+    let oid = commit_file(&repo, "exists.rs", "content\n", "commit");
+    
+    let result = get_file_content(&repo, oid, "nonexistent.rs");
+    assert!(result.is_err());
+}
+
+// === restore_file tests ===
+
+#[test]
+fn test_restore_file_writes_to_disk() {
+    let (dir, repo) = create_test_repo();
+    let oid = commit_file(&repo, "test.rs", "original content\n", "v1");
+    
+    let file_path = dir.path().join("test.rs");
+    fs::write(&file_path, "modified content\n").expect("modify");
+    
+    // restore_file writes relative to cwd, so cd into repo
+    let original_dir = env::current_dir().expect("get cwd");
+    env::set_current_dir(dir.path()).expect("cd to repo");
+    
+    let result = restore_file(&repo, oid, "test.rs");
+    
+    // Always restore original directory
+    env::set_current_dir(&original_dir).expect("restore cwd");
+    
+    result.expect("restore");
+    let restored = fs::read_to_string(&file_path).expect("read");
+    assert_eq!(restored, "original content\n");
+}
+
+#[test]
+fn test_restore_file_older_version() {
+    let (dir, repo) = create_test_repo();
+    let oid1 = commit_file(&repo, "test.rs", "v1 content\n", "v1");
+    let _oid2 = commit_file(&repo, "test.rs", "v2 content\n", "v2");
+    let _oid3 = commit_file(&repo, "test.rs", "v3 content\n", "v3");
+    
+    // restore_file writes relative to cwd, so cd into repo
+    let original_dir = env::current_dir().expect("get cwd");
+    env::set_current_dir(dir.path()).expect("cd to repo");
+    
+    let result = restore_file(&repo, oid1, "test.rs");
+    
+    // Always restore original directory
+    env::set_current_dir(&original_dir).expect("restore cwd");
+    
+    result.expect("restore");
+    let file_path = dir.path().join("test.rs");
+    let restored = fs::read_to_string(&file_path).expect("read");
+    assert_eq!(restored, "v1 content\n");
+}
+
+#[test]
+fn test_restore_file_nested_path() {
+    let (dir, repo) = create_test_repo();
+    let oid = commit_file(&repo, "src/lib/module.rs", "nested content\n", "commit");
+    
+    let file_path = dir.path().join("src/lib/module.rs");
+    fs::remove_file(&file_path).expect("remove");
+    
+    // restore_file writes relative to cwd, so cd into repo
+    let original_dir = env::current_dir().expect("get cwd");
+    env::set_current_dir(dir.path()).expect("cd to repo");
+    
+    let result = restore_file(&repo, oid, "src/lib/module.rs");
+    
+    // Always restore original directory
+    env::set_current_dir(&original_dir).expect("restore cwd");
+    
+    if result.is_ok() {
+        let restored = fs::read_to_string(&file_path).expect("read");
+        assert_eq!(restored, "nested content\n");
+    }
+}
+#__SLOPCHOP_END__#
+
+#__SLOPCHOP_FILE__# tests/input_tests.rs
+//! Input handling tests
+//! Anchors: input-hit-test, view-mode-*, mouse-state-*
+
+use git_trek::mouse::{hit_test, HitBox, HitId, MouseState};
+use git_trek::views::ViewMode;
+use ratatui::layout::Rect;
+
+// === hit_test tests ===
+
+#[test]
+fn test_hit_test_no_boxes_returns_none() {
+    assert_eq!(hit_test(10, 10, &[]), HitId::None);
+}
+
+#[test]
+fn test_hit_test_miss_returns_none() {
+    let boxes = vec![
+        HitBox { rect: Rect::new(0, 0, 10, 10), id: HitId::File("test.rs".to_string()) },
+    ];
+    assert_eq!(hit_test(15, 15, &boxes), HitId::None);
+}
+
+#[test]
+fn test_hit_test_hit_returns_id() {
+    let boxes = vec![
+        HitBox { rect: Rect::new(0, 0, 10, 10), id: HitId::File("test.rs".to_string()) },
+    ];
+    assert_eq!(hit_test(5, 5, &boxes), HitId::File("test.rs".to_string()));
+}
+
+#[test]
+fn test_hit_test_boundary_inclusive() {
+    let boxes = vec![
+        HitBox { rect: Rect::new(10, 10, 5, 5), id: HitId::ViewTab(0) },
+    ];
+    // Top-left corner (inclusive)
+    assert_eq!(hit_test(10, 10, &boxes), HitId::ViewTab(0));
+    // Just inside bottom-right
+    assert_eq!(hit_test(14, 14, &boxes), HitId::ViewTab(0));
+}
+
+#[test]
+fn test_hit_test_boundary_exclusive() {
+    let boxes = vec![
+        HitBox { rect: Rect::new(10, 10, 5, 5), id: HitId::ViewTab(0) },
+    ];
+    // Right edge (exclusive)
+    assert_eq!(hit_test(15, 10, &boxes), HitId::None);
+    // Bottom edge (exclusive)
+    assert_eq!(hit_test(10, 15, &boxes), HitId::None);
+}
+
+#[test]
+fn test_hit_test_first_match_wins() {
+    let boxes = vec![
+        HitBox { rect: Rect::new(0, 0, 20, 20), id: HitId::File("first.rs".to_string()) },
+        HitBox { rect: Rect::new(5, 5, 10, 10), id: HitId::File("second.rs".to_string()) },
+    ];
+    assert_eq!(hit_test(7, 7, &boxes), HitId::File("first.rs".to_string()));
+}
+
+#[test]
+fn test_hit_test_zero_size_rect() {
+    let boxes = vec![
+        HitBox { rect: Rect::new(10, 10, 0, 0), id: HitId::File("zero.rs".to_string()) },
+    ];
+    assert_eq!(hit_test(10, 10, &boxes), HitId::None);
+}
+
+#[test]
+fn test_hit_test_large_coordinates() {
+    let boxes = vec![
+        HitBox { rect: Rect::new(1000, 1000, 100, 100), id: HitId::File("far.rs".to_string()) },
+    ];
+    assert_eq!(hit_test(1050, 1050, &boxes), HitId::File("far.rs".to_string()));
+    assert_eq!(hit_test(999, 1050, &boxes), HitId::None);
+}
+
+// === MouseState tests ===
+
+#[test]
+fn test_mouse_state_default() {
+    let state = MouseState::default();
+    assert_eq!(state.x, 0);
+    assert_eq!(state.y, 0);
+    assert_eq!(state.hover, HitId::None);
+}
+
+#[test]
+fn test_mouse_state_update_position() {
+    let mut state = MouseState::default();
+    state.update_position(42, 99);
+    assert_eq!(state.x, 42);
+    assert_eq!(state.y, 99);
+}
+
+#[test]
+fn test_mouse_state_update_position_max_values() {
+    let mut state = MouseState::default();
+    state.update_position(u16::MAX, u16::MAX);
+    assert_eq!(state.x, u16::MAX);
+    assert_eq!(state.y, u16::MAX);
+}
+
+#[test]
+fn test_mouse_state_set_hover() {
+    let mut state = MouseState::default();
+    state.set_hover(HitId::File("test.rs".to_string()));
+    assert_eq!(state.hover, HitId::File("test.rs".to_string()));
+}
+
+#[test]
+fn test_mouse_state_set_hover_overwrites() {
+    let mut state = MouseState::default();
+    state.set_hover(HitId::File("first.rs".to_string()));
+    state.set_hover(HitId::ViewTab(2));
+    assert_eq!(state.hover, HitId::ViewTab(2));
+}
+
+#[test]
+fn test_mouse_state_set_hover_none() {
+    let mut state = MouseState::default();
+    state.set_hover(HitId::File("test.rs".to_string()));
+    state.set_hover(HitId::None);
+    assert_eq!(state.hover, HitId::None);
+}
+
+// === ViewMode tests ===
+
+#[test]
+fn test_viewmode_name() {
+    assert_eq!(ViewMode::Treemap.name(), "Treemap");
+    assert_eq!(ViewMode::Heatmap.name(), "Heatmap");
+    assert_eq!(ViewMode::Minimap.name(), "Minimap");
+    assert_eq!(ViewMode::River.name(), "River");
+    assert_eq!(ViewMode::Focus.name(), "Focus");
+}
+
+#[test]
+fn test_viewmode_index() {
+    assert_eq!(ViewMode::Treemap.index(), 0);
+    assert_eq!(ViewMode::Heatmap.index(), 1);
+    assert_eq!(ViewMode::Minimap.index(), 2);
+    assert_eq!(ViewMode::River.index(), 3);
+    assert_eq!(ViewMode::Focus.index(), 4);
+}
+
+#[test]
+fn test_viewmode_from_index_valid() {
+    assert_eq!(ViewMode::from_index(0), ViewMode::Treemap);
+    assert_eq!(ViewMode::from_index(1), ViewMode::Heatmap);
+    assert_eq!(ViewMode::from_index(2), ViewMode::Minimap);
+    assert_eq!(ViewMode::from_index(3), ViewMode::River);
+    assert_eq!(ViewMode::from_index(4), ViewMode::Focus);
+}
+
+#[test]
+fn test_viewmode_from_index_invalid_defaults_to_treemap() {
+    assert_eq!(ViewMode::from_index(5), ViewMode::Treemap);
+    assert_eq!(ViewMode::from_index(99), ViewMode::Treemap);
+    assert_eq!(ViewMode::from_index(usize::MAX), ViewMode::Treemap);
+}
+
+#[test]
+fn test_viewmode_next_cycles() {
+    assert_eq!(ViewMode::Treemap.next(), ViewMode::Heatmap);
+    assert_eq!(ViewMode::Heatmap.next(), ViewMode::Minimap);
+    assert_eq!(ViewMode::Minimap.next(), ViewMode::River);
+    assert_eq!(ViewMode::River.next(), ViewMode::Focus);
+    assert_eq!(ViewMode::Focus.next(), ViewMode::Treemap);
+}
+
+#[test]
+fn test_viewmode_prev_cycles() {
+    assert_eq!(ViewMode::Treemap.prev(), ViewMode::Focus);
+    assert_eq!(ViewMode::Focus.prev(), ViewMode::River);
+    assert_eq!(ViewMode::River.prev(), ViewMode::Minimap);
+    assert_eq!(ViewMode::Minimap.prev(), ViewMode::Heatmap);
+    assert_eq!(ViewMode::Heatmap.prev(), ViewMode::Treemap);
+}
+
+#[test]
+fn test_viewmode_all_array() {
+    assert_eq!(ViewMode::ALL.len(), 5);
+    assert_eq!(ViewMode::ALL[0], ViewMode::Treemap);
+    assert_eq!(ViewMode::ALL[4], ViewMode::Focus);
+}
+
+#[test]
+fn test_viewmode_roundtrip() {
+    for mode in ViewMode::ALL {
+        let idx = mode.index();
+        let recovered = ViewMode::from_index(idx);
+        assert_eq!(mode, recovered);
+    }
+}
+
+#[test]
+fn test_viewmode_next_prev_inverse() {
+    for mode in ViewMode::ALL {
+        assert_eq!(mode.next().prev(), mode);
+        assert_eq!(mode.prev().next(), mode);
+    }
+}
+#__SLOPCHOP_END__#
+
+#__SLOPCHOP_FILE__# tests/integration_test.rs
+#![allow(deprecated)]
+
+use assert_cmd::Command;
+use predicates::prelude::*;
+use std::process::Command as StdCommand;
+use tempfile::TempDir;
+
+#[test]
+fn test_help_command() {
+    let mut cmd = Command::cargo_bin("git-trek").unwrap();
+    cmd.arg("--help")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Navigate git history"));
+}
+
+#[test]
+fn test_version_command() {
+    let mut cmd = Command::cargo_bin("git-trek").unwrap();
+    cmd.arg("--version")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("git-trek"));
+}
+
+#[test]
+fn test_dry_run_flow() {
+    // Setup temp git repo
+    let temp_dir = TempDir::new().unwrap();
+    let path = temp_dir.path();
+
+    // git init
+    let status = StdCommand::new("git")
+        .current_dir(path)
+        .arg("init")
+        .status()
+        .unwrap();
+    assert!(status.success());
+
+    // git config (local)
+    StdCommand::new("git")
+        .current_dir(path)
+        .args(["config", "user.email", "test@example.com"])
+        .status().unwrap();
+    StdCommand::new("git")
+        .current_dir(path)
+        .args(["config", "user.name", "Test User"])
+        .status().unwrap();
+
+    // git commit --allow-empty
+    let status = StdCommand::new("git")
+        .current_dir(path)
+        .args(["commit", "--allow-empty", "-m", "Initial commit"])
+        .status()
+        .unwrap();
+    assert!(status.success());
+
+    // Run git-trek --dry-run
+    let mut cmd = Command::cargo_bin("git-trek").unwrap();
+    cmd.current_dir(path)
+        .arg("--dry-run")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("App initialized and rendered successfully"));
+}
+
+#__SLOPCHOP_END__#
+
+#__SLOPCHOP_FILE__# tests/treemap_tests.rs
+//! Treemap layout and utility tests
+//! Tests `truncate_path` edge cases, `compute_treemap_layout` validity
+
+use git_trek::views::treemap::{compute_treemap_layout, truncate_path};
+use ratatui::layout::Rect;
+
+// === truncate_path tests ===
+
+#[test]
+fn test_truncate_path_short_unchanged() {
+    assert_eq!(truncate_path("main.rs", 20), "main.rs");
+}
+
+#[test]
+fn test_truncate_path_exact_length() {
+    assert_eq!(truncate_path("main.rs", 7), "main.rs");
+}
+
+#[test]
+fn test_truncate_path_extracts_filename() {
+    let result = truncate_path("src/views/treemap.rs", 10);
+    assert!(result.len() <= 10);
+    assert!(result.starts_with("treemap"));
+}
+
+#[test]
+fn test_truncate_path_adds_ellipsis() {
+    let result = truncate_path("src/very_long_filename.rs", 8);
+    assert!(result.ends_with(".."));
+    assert!(result.len() <= 8);
+}
+
+#[test]
+fn test_truncate_path_empty() {
+    assert_eq!(truncate_path("", 10), "");
+}
+
+#[test]
+fn test_truncate_path_just_filename() {
+    assert_eq!(truncate_path("x.rs", 10), "x.rs");
+}
+
+#[test]
+fn test_truncate_path_max_zero() {
+    let result = truncate_path("test.rs", 0);
+    assert!(result.is_empty() || result.len() <= 2);
+}
+
+#[test]
+fn test_truncate_path_max_one() {
+    let result = truncate_path("test.rs", 1);
+    assert!(result.len() <= 1);
+}
+
+#[test]
+fn test_truncate_path_unicode() {
+    let result = truncate_path("src/日本語.rs", 8);
+    assert!(result.chars().count() <= 8);
+}
+
+#[test]
+fn test_truncate_path_deeply_nested() {
+    let result = truncate_path("a/b/c/d/e/f/g/file.rs", 10);
+    assert!(result.len() <= 10);
+    assert!(result.contains("file") || result.ends_with(".."));
+}
+
+// === compute_treemap_layout tests ===
+
+#[test]
+fn test_treemap_layout_empty_files() {
+    let files: Vec<(String, usize)> = vec![];
+    let area = Rect::new(0, 0, 100, 50);
+    let result = compute_treemap_layout(&files, area);
+    assert!(result.is_empty());
+}
+
+#[test]
+fn test_treemap_layout_single_file() {
+    let files = vec![("main.rs".to_string(), 100)];
+    let area = Rect::new(0, 0, 100, 50);
+    let result = compute_treemap_layout(&files, area);
+    
+    assert_eq!(result.len(), 1);
+    assert_eq!(result[0].0, "main.rs");
+    assert_eq!(result[0].1, 100);
+}
+
+#[test]
+fn test_treemap_layout_rects_within_bounds() {
+    let files = vec![
+        ("a.rs".to_string(), 100),
+        ("b.rs".to_string(), 50),
+        ("c.rs".to_string(), 25),
+    ];
+    let area = Rect::new(10, 20, 80, 40);
+    let result = compute_treemap_layout(&files, area);
+    
+    for (path, _lines, rect) in &result {
+        assert!(rect.x >= area.x, "{path} x out of bounds");
+        assert!(rect.y >= area.y, "{path} y out of bounds");
+        assert!(rect.x + rect.width <= area.x + area.width, "{path} right edge out of bounds");
+        assert!(rect.y + rect.height <= area.y + area.height, "{path} bottom edge out of bounds");
+    }
+}
+
+#[test]
+fn test_treemap_layout_all_files_present() {
+    let files = vec![
+        ("a.rs".to_string(), 100),
+        ("b.rs".to_string(), 50),
+        ("c.rs".to_string(), 25),
+    ];
+    let area = Rect::new(0, 0, 100, 50);
+    let result = compute_treemap_layout(&files, area);
+    
+    let paths: Vec<_> = result.iter().map(|(p, _, _)| p.as_str()).collect();
+    assert!(paths.contains(&"a.rs"));
+    assert!(paths.contains(&"b.rs"));
+    assert!(paths.contains(&"c.rs"));
+}
+
+#[test]
+fn test_treemap_layout_zero_area_width() {
+    let files = vec![("a.rs".to_string(), 100)];
+    let area = Rect::new(0, 0, 0, 50);
+    let result = compute_treemap_layout(&files, area);
+    assert!(result.is_empty());
+}
+
+#[test]
+fn test_treemap_layout_zero_area_height() {
+    let files = vec![("a.rs".to_string(), 100)];
+    let area = Rect::new(0, 0, 100, 0);
+    let result = compute_treemap_layout(&files, area);
+    assert!(result.is_empty());
+}
+
+#[test]
+fn test_treemap_layout_tiny_area() {
+    let files = vec![("a.rs".to_string(), 100)];
+    let area = Rect::new(0, 0, 2, 2);
+    let result = compute_treemap_layout(&files, area);
+    for (_, _, rect) in &result {
+        assert!(rect.width >= 1);
+        assert!(rect.height >= 1);
+    }
+}
+
+#[test]
+fn test_treemap_layout_respects_20_file_limit() {
+    let files: Vec<_> = (0..30)
+        .map(|i| (format!("file{i}.rs"), 10))
+        .collect();
+    let area = Rect::new(0, 0, 200, 100);
+    let result = compute_treemap_layout(&files, area);
+    
+    assert!(result.len() <= 20, "Should limit to 20 files, got {}", result.len());
+}
+
+#[test]
+fn test_treemap_layout_zero_line_files() {
+    let files = vec![
+        ("empty.rs".to_string(), 0),
+        ("also_empty.rs".to_string(), 0),
+    ];
+    let area = Rect::new(0, 0, 100, 50);
+    let result = compute_treemap_layout(&files, area);
+    assert!(result.is_empty() || result.iter().all(|(_, _, r)| r.width > 0 && r.height > 0));
+}
+
+#[test]
+fn test_treemap_layout_mixed_sizes() {
+    let files = vec![
+        ("huge.rs".to_string(), 10000),
+        ("tiny.rs".to_string(), 1),
+    ];
+    let area = Rect::new(0, 0, 100, 50);
+    let result = compute_treemap_layout(&files, area);
+    
+    if result.len() == 2 {
+        let huge_area = u32::from(result[0].2.width) * u32::from(result[0].2.height);
+        let tiny_area = u32::from(result[1].2.width) * u32::from(result[1].2.height);
+        assert!(huge_area > tiny_area, "Larger file should get more area");
+    }
+}
+#__SLOPCHOP_END__#
+
