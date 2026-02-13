@@ -1,44 +1,50 @@
-pub mod treemap;
+mod terrain;
 
 use ratatui::Frame;
-use crate::{app::App, mouse::HitBox};
+
+use crate::app::App;
+use crate::mouse::HitBox;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum ViewMode {
     #[default]
-    Treemap,
-    Heatmap,
-    Minimap,
-    River,
-    Focus,
+    Terrain,
+    Seismic,
+    Strata,
+    Flow,
+    Constellation,
+    Surgery,
 }
 
 impl ViewMode {
-    pub const ALL: [ViewMode; 5] = [
-        ViewMode::Treemap,
-        ViewMode::Heatmap,
-        ViewMode::Minimap,
-        ViewMode::River,
-        ViewMode::Focus,
+    pub const ALL: [ViewMode; 6] = [
+        ViewMode::Terrain,
+        ViewMode::Seismic,
+        ViewMode::Strata,
+        ViewMode::Flow,
+        ViewMode::Constellation,
+        ViewMode::Surgery,
     ];
 
     pub fn name(self) -> &'static str {
         match self {
-            ViewMode::Treemap => "Treemap",
-            ViewMode::Heatmap => "Heatmap",
-            ViewMode::Minimap => "Minimap",
-            ViewMode::River => "River",
-            ViewMode::Focus => "Focus",
+            ViewMode::Terrain => "Terrain",
+            ViewMode::Seismic => "Seismic",
+            ViewMode::Strata => "Strata",
+            ViewMode::Flow => "Flow",
+            ViewMode::Constellation => "Stars",
+            ViewMode::Surgery => "Surgery",
         }
     }
 
     pub fn index(self) -> usize {
         match self {
-            ViewMode::Treemap => 0,
-            ViewMode::Heatmap => 1,
-            ViewMode::Minimap => 2,
-            ViewMode::River => 3,
-            ViewMode::Focus => 4,
+            ViewMode::Terrain => 0,
+            ViewMode::Seismic => 1,
+            ViewMode::Strata => 2,
+            ViewMode::Flow => 3,
+            ViewMode::Constellation => 4,
+            ViewMode::Surgery => 5,
         }
     }
 
@@ -46,28 +52,38 @@ impl ViewMode {
         Self::ALL.get(i).copied().unwrap_or_default()
     }
 
+    #[must_use]
     pub fn next(self) -> Self {
         Self::from_index((self.index() + 1) % Self::ALL.len())
     }
 
+    #[must_use]
     pub fn prev(self) -> Self {
         let i = self.index();
         Self::from_index(if i == 0 { Self::ALL.len() - 1 } else { i - 1 })
     }
 }
 
-pub struct RenderResult {
+/// Result of rendering a view, containing hit boxes for mouse interaction.
+pub struct Render {
     pub hit_boxes: Vec<HitBox>,
 }
 
-impl RenderResult {
-    pub fn new() -> Self { Self { hit_boxes: Vec::new() } }
+impl Render {
+    pub fn new() -> Self {
+        Self {
+            hit_boxes: Vec::new(),
+        }
+    }
 }
 
-impl Default for RenderResult {
-    fn default() -> Self { Self::new() }
+impl Default for Render {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
-pub fn draw(f: &mut Frame, app: &App) -> RenderResult {
-    treemap::draw(f, app)
+/// Draw the current view.
+pub fn draw(f: &mut Frame, app: &App) -> Render {
+    terrain::draw(f, app)
 }

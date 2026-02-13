@@ -1,100 +1,96 @@
-use anyhow::{Context, Result};
 use git2::{Oid, Repository, Sort, Tree};
 
-use crate::data::{CommitInfo, FileSnapshot, RepoData, TrackedFile};
+use crate::data::{Commit, FileHistory, History, Snapshot};
+use crate::error::{Result, TrekError};
 
-pub fn load_repo_data(repo: &Repository, limit: usize) -> Result<RepoData> {
-    let mut data = RepoData::new();
+/// Find and open the git repository.
+pub fn find_repository() -> Result<Repository> {
+    Repository::open_from_env().map_err(|_| TrekError::NoRepository)
+}
+
+/// Load complete repository history up to limit commits.
+pub fn load_history(repo: &Repository, limit: usize) -> Result<History> {
+    let mut history = History::new();
     let oids = collect_commit_oids(repo, limit)?;
+
+    if oids.is_empty() {
+        return Err(TrekError::NoCommits);
+    }
 
     for (idx, oid) in oids.iter().enumerate() {
         let commit = repo.find_commit(*oid)?;
-        let info = build_commit_info(repo, &commit)?;
-        collect_file_snapshots(repo, &commit.tree()?, idx, &mut data.files)?;
-        data.commits.push(info);
+        let info = build_commit_info(&commit);
+        collect_file_snapshots(repo, &commit.tree()?, idx, &mut history.files)?;
+        history.commits.push(info);
     }
-    Ok(data)
+
+    Ok(history)
 }
 
+/// Collect commit OIDs in reverse chronological order.
 fn collect_commit_oids(repo: &Repository, limit: usize) -> Result<Vec<Oid>> {
     let mut revwalk = repo.revwalk()?;
     revwalk.push_head()?;
     revwalk.set_sorting(Sort::TOPOLOGICAL | Sort::TIME)?;
-    Ok(revwalk.filter_map(Result::ok).take(limit).collect())
+    let oids: Vec<Oid> = revwalk
+        .filter_map(std::result::Result::ok)
+        .take(limit)
+        .collect();
+    Ok(oids)
 }
 
-fn build_commit_info(repo: &Repository, commit: &git2::Commit) -> Result<CommitInfo> {
-    let author_str = commit.author().to_string();
-    let summary_str = commit.summary().unwrap_or("").to_string();
-    let (insertions, deletions) = get_diff_stats(repo, commit)?;
-
-    Ok(CommitInfo {
-        oid: commit.id(),
-        summary: summary_str,
-        author: author_str,
-        timestamp: commit.time().seconds(),
-        files_changed: Vec::new(),
-        insertions,
-        deletions,
-    })
+/// Build commit info from a git commit.
+fn build_commit_info(commit: &git2::Commit) -> Commit {
+    let summary = commit.summary().unwrap_or("").to_string();
+    Commit::new(commit.id(), summary)
 }
 
-fn get_diff_stats(repo: &Repository, commit: &git2::Commit) -> Result<(usize, usize)> {
-    if commit.parent_count() == 0 {
-        return Ok((0, 0));
-    }
-    let parent = commit.parent(0)?;
-    let diff = repo.diff_tree_to_tree(Some(&parent.tree()?), Some(&commit.tree()?), None)?;
-    let stats = diff.stats()?;
-    Ok((stats.insertions(), stats.deletions()))
-}
-
+/// Collect file snapshots from a tree.
 fn collect_file_snapshots(
     repo: &Repository,
     tree: &Tree,
-    idx: usize,
-    files: &mut std::collections::HashMap<String, TrackedFile>,
+    commit_idx: usize,
+    files: &mut std::collections::HashMap<String, FileHistory>,
 ) -> Result<()> {
     tree.walk(git2::TreeWalkMode::PreOrder, |dir, entry| {
         if entry.kind() == Some(git2::ObjectType::Blob) {
-            process_blob_entry(repo, dir, entry, idx, files);
+            if let Ok(blob) = repo.find_blob(entry.id()) {
+                let path = format!("{}{}", dir, entry.name().unwrap_or(""));
+                let content = blob.content();
+                let lines = count_lines(content);
+
+                files
+                    .entry(path.clone())
+                    .or_default()
+                    .snapshots
+                    .insert(commit_idx, Snapshot { lines });
+            }
         }
         git2::TreeWalkResult::Ok
     })?;
+
     Ok(())
 }
 
-fn process_blob_entry(
-    repo: &Repository,
-    dir: &str,
-    entry: &git2::TreeEntry,
-    idx: usize,
-    files: &mut std::collections::HashMap<String, TrackedFile>,
-) {
-    let path = format!("{}{}", dir, entry.name().unwrap_or(""));
-    let Some(blob) = repo.find_blob(entry.id()).ok() else { return };
-    let content = blob.content();
-    #[allow(clippy::naive_bytecount)]
-    let lines = content.iter().filter(|&&c| c == b'\n').count();
-    files
-        .entry(path.clone())
-        .or_insert_with(|| TrackedFile::new(path))
-        .history
-        .insert(idx, FileSnapshot { lines, bytes: content.len() });
+/// Count lines in a byte slice.
+#[allow(clippy::naive_bytecount)]
+fn count_lines(content: &[u8]) -> usize {
+    content.iter().filter(|&&c| c == b'\n').count()
 }
 
-pub fn format_oid(oid: Oid) -> String {
-    oid.to_string()[..8].to_string()
-}
-
+/// Get file content at a specific commit.
 pub fn get_file_content(repo: &Repository, oid: Oid, path: &str) -> Result<String> {
     let commit = repo.find_commit(oid)?;
     let tree = commit.tree()?;
     let entry = tree.get_path(std::path::Path::new(path))?;
     let blob = repo.find_blob(entry.id())?;
-    Ok(std::str::from_utf8(blob.content()).context("not UTF-8")?.to_string())
+
+    std::str::from_utf8(blob.content())
+        .map(std::string::ToString::to_string)
+        .map_err(|_| TrekError::InvalidUtf8)
 }
 
+/// Restore a file from a specific commit to the working directory.
 pub fn restore_file(repo: &Repository, oid: Oid, path: &str) -> Result<()> {
     let content = get_file_content(repo, oid, path)?;
     std::fs::write(path, content)?;

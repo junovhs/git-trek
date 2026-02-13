@@ -1,9 +1,9 @@
 [package]
 name = "git-trek"
-version = "2.2.0"
+version = "3.0.0"
 edition = "2021"
 authors = ["Spencer Nunamaker <junovhs@gmail.com>"]
-description = "🚀 Navigate git history like it's 1989!"
+description = "Navigate git history visually"
 homepage = "https://github.com/junovhs/git-trek"
 repository = "https://github.com/junovhs/git-trek"
 license = "MIT"
@@ -22,6 +22,7 @@ crossterm = "0.28"
 git2 = "0.19"
 ratatui = "0.29"
 chrono = "0.4"
+thiserror = "2.0"
 
 [dev-dependencies]
 assert_cmd = "2.0"

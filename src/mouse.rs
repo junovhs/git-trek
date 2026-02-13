@@ -1,24 +1,40 @@
 use ratatui::layout::Rect;
 
+/// Identifies a clickable element.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub enum HitTarget {
+    #[default]
+    None,
+    File(String),
+    ViewTab(usize),
+}
+
+/// A rectangular region that can be clicked.
 #[derive(Clone, Debug)]
 pub struct HitBox {
     pub rect: Rect,
-    pub id: HitId,
+    pub target: HitTarget,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub enum HitId {
-    File(String),
-    ViewTab(usize),
-    #[default]
-    None,
+impl HitBox {
+    pub fn new(rect: Rect, target: HitTarget) -> Self {
+        Self { rect, target }
+    }
+
+    pub fn contains(&self, x: u16, y: u16) -> bool {
+        x >= self.rect.x
+            && x < self.rect.x + self.rect.width
+            && y >= self.rect.y
+            && y < self.rect.y + self.rect.height
+    }
 }
 
+/// Current mouse state.
 #[derive(Default)]
 pub struct MouseState {
     pub x: u16,
     pub y: u16,
-    pub hover: HitId,
+    pub hover: HitTarget,
 }
 
 impl MouseState {
@@ -27,18 +43,16 @@ impl MouseState {
         self.y = y;
     }
 
-    pub fn set_hover(&mut self, id: HitId) {
-        self.hover = id;
+    pub fn update_hover(&mut self, target: HitTarget) {
+        self.hover = target;
     }
 }
 
-pub fn hit_test(x: u16, y: u16, boxes: &[HitBox]) -> HitId {
-    for hb in boxes {
-        let in_x = x >= hb.rect.x && x < hb.rect.x + hb.rect.width;
-        let in_y = y >= hb.rect.y && y < hb.rect.y + hb.rect.height;
-        if in_x && in_y {
-            return hb.id.clone();
-        }
-    }
-    HitId::None
+/// Find which hit box (if any) contains the given coordinates.
+pub fn hit_test(x: u16, y: u16, boxes: &[HitBox]) -> HitTarget {
+    boxes
+        .iter()
+        .find(|hb| hb.contains(x, y))
+        .map(|hb| hb.target.clone())
+        .unwrap_or_default()
 }
