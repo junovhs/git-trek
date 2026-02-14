@@ -15,6 +15,9 @@
 `Cargo.toml`
 Rust package manifest and dependencies. Centralizes project configuration.
 
+`slopchop.toml`
+Configuration for slopchop. Centralizes project configuration.
+
 ## Layer 1 -- Core
 
 `src/cli.rs`
@@ -34,8 +37,8 @@ Result of rendering a view, containing hit boxes for mouse interaction. Supports
 ## Layer 2 -- Domain
 
 `src/app.rs`
-Module providing `App`, `commit_label`, `current_commit`. Supports application functionality.
-→ Exports: App, commit_label, current_commit, file_health, files_at_current, handle_click, new, next_view, prev_view, restore_selected, scroll_timeline, set_view
+Module providing `App`, `clear_selection`, `commit_count`. Supports application functionality.
+→ Exports: App, clear_selection, commit_count, commit_idx, commit_label, current_commit, file_health, files_at_current, handle_click, message, mouse, mouse_mut, new, next_view, prev_view, quit, restore_selected, scroll_timeline, selected_file, set_view, should_quit, view
 
 `src/data.rs`
 Health status of a file based on change magnitude. Supports application functionality.

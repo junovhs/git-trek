@@ -7,6 +7,7 @@ pub enum HitTarget {
     None,
     File(String),
     ViewTab(usize),
+    SeismicCell(usize),
 }
 
 /// A rectangular region that can be clicked.

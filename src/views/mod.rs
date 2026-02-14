@@ -1,3 +1,4 @@
+mod seismic;
 mod terrain;
 
 use ratatui::Frame;
@@ -85,5 +86,12 @@ impl Default for Render {
 
 /// Draw the current view.
 pub fn draw(f: &mut Frame, app: &App) -> Render {
-    terrain::draw(f, app)
+    match app.view() {
+        ViewMode::Seismic => seismic::draw(f, app),
+        ViewMode::Terrain
+        | ViewMode::Strata
+        | ViewMode::Flow
+        | ViewMode::Constellation
+        | ViewMode::Surgery => terrain::draw(f, app),
+    }
 }

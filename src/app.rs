@@ -1,3 +1,6 @@
+mod navigation;
+mod state;
+
 use git2::Repository;
 
 use crate::cli::Cli;
@@ -7,16 +10,8 @@ use crate::git_ops;
 use crate::mouse::{HitTarget, MouseState};
 use crate::views::ViewMode;
 
-pub struct App {
-    repo: Repository,
-    history: History,
-    view: ViewMode,
-    commit_idx: usize,
-    selected_file: Option<String>,
-    mouse: MouseState,
-    should_quit: bool,
-    message: Option<String>,
-}
+pub use navigation::scroll_timeline;
+pub use state::App;
 
 impl App {
     pub fn new(cli: &Cli) -> Result<Self> {
@@ -32,7 +27,13 @@ impl App {
             mouse: MouseState::default(),
             should_quit: false,
             message: None,
+            seismic_scroll: 0,
+            seismic_filter_inactive: false,
         })
+    }
+
+    pub fn history(&self) -> &History {
+        &self.history
     }
 
     pub fn view(&self) -> ViewMode {
@@ -95,48 +96,6 @@ impl App {
         } else {
             None
         }
-    }
-
-    pub fn handle_click(&mut self, target: HitTarget) {
-        match target {
-            HitTarget::File(path) => {
-                self.selected_file = Some(path);
-            }
-            HitTarget::ViewTab(i) => {
-                self.view = ViewMode::from_index(i);
-            }
-            HitTarget::None => {}
-        }
-    }
-
-    pub fn scroll_timeline(&mut self, delta: isize) {
-        let max = self.history.commits.len().saturating_sub(1);
-        let new_idx = if delta > 0 {
-            self.commit_idx.saturating_add(delta.unsigned_abs())
-        } else {
-            self.commit_idx.saturating_sub(delta.unsigned_abs())
-        };
-        self.commit_idx = new_idx.min(max);
-    }
-
-    pub fn set_view(&mut self, mode: ViewMode) {
-        self.view = mode;
-    }
-
-    pub fn next_view(&mut self) {
-        self.view = self.view.next();
-    }
-
-    pub fn prev_view(&mut self) {
-        self.view = self.view.prev();
-    }
-
-    pub fn clear_selection(&mut self) {
-        self.selected_file = None;
-    }
-
-    pub fn quit(&mut self) {
-        self.should_quit = true;
     }
 
     pub fn restore_selected(&mut self) -> Result<()> {
